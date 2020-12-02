@@ -13,15 +13,15 @@ fn main() {
   
   let numbers = read_and_parse(&args.path);
 
-  two_numbers(numbers.clone());
-  three_numbers(numbers);
+  two_numbers(&numbers);
+  three_numbers(&numbers);
 }
 
 fn read_and_parse(path: &str) -> Vec<i32> {
   let contents = fs::read_to_string(path)
         .expect("Something went wrong reading the file");
 
-  let numbers: Vec<i32> = contents
+  let numbers = contents
         .split_whitespace()
         .map(|s| s.parse().expect("parse error"))
         .collect();
@@ -29,7 +29,7 @@ fn read_and_parse(path: &str) -> Vec<i32> {
   numbers
 }
 
-fn two_numbers(numbers: Vec<i32>) {
+fn two_numbers(numbers: &Vec<i32>) {
   for number_a in numbers.iter() {
     for number_b in numbers.iter() {
       if number_a != number_b {
@@ -43,7 +43,7 @@ fn two_numbers(numbers: Vec<i32>) {
   }
 }
 
-fn three_numbers(numbers: Vec<i32>) {
+fn three_numbers(numbers: &Vec<i32>) {
   for number_a in numbers.iter() {
     for number_b in numbers.iter() {
       for number_c in numbers.iter() {
