@@ -36,6 +36,11 @@ fn main() {
 
     println!("Count: {}", &valid_bags.len());
 
+    let mut bags = bag_count(&all_bags, &"shiny gold".to_string());
+    bags.sort();
+    bags.dedup();
+    println!("Count Option 2: {}", bags.len());
+
     let mut weight = weights(&all_bags, &"shiny gold".to_string());
     weight -= 1; // because "shiny gold" has no own weight
     println!("Required wrapped bags: {}", weight);
@@ -111,6 +116,23 @@ fn map_bags(bags: &Vec<Bag>) -> HashMap<String, HashSet<String>> {
     }
 
     bag_mapping
+}
+
+// Part 1 version 2
+fn bag_count(bags: &Vec<Bag>, name: &String) -> Vec<String> {
+    let mut found_bags: Vec<String> = vec![];
+    for bag in bags
+        .iter()
+        .filter(|b| match b.bags.iter().find(|c| c.0 == *name) {
+            None => false,
+            _ => true,
+        })
+    {
+        found_bags.push(bag.name.clone());
+        found_bags.append(&mut bag_count(bags, &bag.name));
+    }
+
+    found_bags
 }
 
 // Part 2
