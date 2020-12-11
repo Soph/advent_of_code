@@ -59,12 +59,11 @@ fn do_all_seating(
         if !result.1 {
             break;
         }
-        println!("Iteration: {}", iterations);
         iterations += 1;
         used_seating = result.0.clone();
-        print_plan(&used_seating);
+        // print_plan(&used_seating);
     }
-
+    println!("Iterations: {}", iterations);
     count_full_seats(&used_seating)
 }
 
@@ -82,7 +81,7 @@ fn do_seating(
                 NO_SEAT => 0,
                 _ => occupied_seats_count(seating, x, y),
             };
-            print!("{}", occupied_seats);
+            //print!("{}", occupied_seats);
             match seating[y][x] {
                 FULL_SEAT => {
                     if occupied_seats >= max_seats {
@@ -99,7 +98,7 @@ fn do_seating(
                 _ => (),
             }
         }
-        println!("");
+        //println!("");
     }
 
     (new_seating, changed)
