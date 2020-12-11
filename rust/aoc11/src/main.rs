@@ -1,5 +1,5 @@
-use std::fs;
 use std::cmp;
+use std::fs;
 use structopt::StructOpt;
 
 /// Search for a pattern in a file and display the lines that contain it.
@@ -45,7 +45,11 @@ fn read_and_parse(path: &str) -> Vec<Vec<u8>> {
         .collect()
 }
 
-fn do_all_seating(seating: &Vec<Vec<u8>>, max_seats: u8, occupied_seats_count: &dyn Fn(&Vec<Vec<u8>>, usize, usize) -> u8) -> u64 {
+fn do_all_seating(
+    seating: &Vec<Vec<u8>>,
+    max_seats: u8,
+    occupied_seats_count: &dyn Fn(&Vec<Vec<u8>>, usize, usize) -> u8,
+) -> u64 {
     let mut iterations = 0;
     let mut used_seating = seating.clone();
 
@@ -64,9 +68,13 @@ fn do_all_seating(seating: &Vec<Vec<u8>>, max_seats: u8, occupied_seats_count: &
     count_full_seats(&used_seating)
 }
 
-fn do_seating(seating: &Vec<Vec<u8>>, max_seats: u8, occupied_seats_count: &dyn Fn(&Vec<Vec<u8>>, usize, usize) -> u8) -> (Vec<Vec<u8>>, bool) {
+fn do_seating(
+    seating: &Vec<Vec<u8>>,
+    max_seats: u8,
+    occupied_seats_count: &dyn Fn(&Vec<Vec<u8>>, usize, usize) -> u8,
+) -> (Vec<Vec<u8>>, bool) {
     let mut changed: bool = false;
-    let mut new_seating:Vec<Vec<u8>> = seating.clone();
+    let mut new_seating: Vec<Vec<u8>> = seating.clone();
 
     for y in 0..seating.len() {
         for x in 0..seating[y].len() {
@@ -106,23 +114,20 @@ fn occupied_seats_count1(seats: &Vec<Vec<u8>>, cur_x: usize, cur_y: usize) -> u8
 
     for y in min_y..=(cur_y + 1) {
         for x in min_x..=(cur_x + 1) {
-            if (x,y) == (cur_x, cur_y) {
+            if (x, y) == (cur_x, cur_y) {
                 continue;
             }
             match seats.get(y) {
-                Some(row) => {
-                    match row.get(x) {
-                        Some(seat) => {
-                            if *seat == FULL_SEAT {
-                                count += 1;
-                            }
-                        },
-                        _ => (),
+                Some(row) => match row.get(x) {
+                    Some(seat) => {
+                        if *seat == FULL_SEAT {
+                            count += 1;
+                        }
                     }
+                    _ => (),
                 },
                 _ => (),
             }
-
         }
     }
 
@@ -130,7 +135,16 @@ fn occupied_seats_count1(seats: &Vec<Vec<u8>>, cur_x: usize, cur_y: usize) -> u8
 }
 
 fn occupied_seats_count3(seats: &Vec<Vec<u8>>, cur_x: usize, cur_y: usize) -> u8 {
-    let search_matrix: Vec<(i16, i16)> = vec!((-1,-1), (-1,0), (-1,1), (0,1), (0,-1), (1,0), (1,1), (1,-1));
+    let search_matrix: Vec<(i16, i16)> = vec![
+        (-1, -1),
+        (-1, 0),
+        (-1, 1),
+        (0, 1),
+        (0, -1),
+        (1, 0),
+        (1, 1),
+        (1, -1),
+    ];
     let max_search = cmp::max(seats.len(), seats[0].len());
     let mut count = 0;
 
@@ -153,17 +167,17 @@ fn occupied_seats_count3(seats: &Vec<Vec<u8>>, cur_x: usize, cur_y: usize) -> u8
                                     //println!("Found Full Seat");
                                     count += 1;
                                     break;
-                                },
+                                }
                                 EMPTY_SEAT => {
                                     //println!("Found Empty Seat");
                                     break;
-                                },
+                                }
                                 _ => (),
                             }
-                        },
+                        }
                         _ => (),
                     }
-                },
+                }
                 _ => (),
             }
         }
@@ -189,8 +203,15 @@ fn count_full_seats(seating: &Vec<Vec<u8>>) -> u64 {
 fn print_plan(seats: &Vec<Vec<u8>>) {
     for rows in seats {
         for seat in rows {
-            print!("{}", match *seat { FULL_SEAT => "#", EMPTY_SEAT => "L", _ => "."});
+            print!(
+                "{}",
+                match *seat {
+                    FULL_SEAT => "#",
+                    EMPTY_SEAT => "L",
+                    _ => ".",
+                }
+            );
         }
         println!("");
-    }    
+    }
 }
