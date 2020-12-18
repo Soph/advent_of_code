@@ -105,55 +105,50 @@ fn calculate_numbers2(numbers: &String) -> u64 {
     let mut processing = numbers.replace(" ", "");
     let regex_add = Regex::new(r"(\d+)([\+])(\d+)").unwrap();
     let regex_mul = Regex::new(r"(\d+)([\*])(\d+)").unwrap();
+    let mut partial = "".to_string();
+    let mut value = 0;
+    let mut found;
 
     loop {
-        let mut found = false;
-        let mut replacements: HashMap<String, u64> = HashMap::new();
+        found = false;
         let captures = regex_add.captures_iter(processing.as_str()).next();
         match captures {
             Some(capture) => match &capture[2] {
                 "+" => {
                     found = true;
-                    replacements.insert(
-                        capture[0].to_string(),
-                        capture[1].parse::<u64>().unwrap() + capture[3].parse::<u64>().unwrap(),
-                    );
+                    partial = capture[0].to_string();
+                    value = capture[1].parse::<u64>().unwrap() + capture[3].parse::<u64>().unwrap();
                 }
                 _ => (),
             },
             None => (),
         }
 
-        for (key, value) in replacements {
-            processing = processing.replacen(key.as_str(), value.to_string().as_str(), 1);
-        }
-        if !found {
+        if found {
+            processing = processing.replacen(partial.as_str(), value.to_string().as_str(), 1);
+        } else {
             break;
         }
     }
 
     loop {
-        let mut found = false;
-        let mut replacements: HashMap<String, u64> = HashMap::new();
+        found = false;
         let captures = regex_mul.captures_iter(processing.as_str()).next();
         match captures {
             Some(capture) => match &capture[2] {
                 "*" => {
                     found = true;
-                    replacements.insert(
-                        capture[0].to_string(),
-                        capture[1].parse::<u64>().unwrap() * capture[3].parse::<u64>().unwrap(),
-                    );
+                    partial = capture[0].to_string();
+                    value = capture[1].parse::<u64>().unwrap() * capture[3].parse::<u64>().unwrap();
                 }
                 _ => (),
             },
             None => (),
         }
 
-        for (key, value) in replacements {
-            processing = processing.replacen(key.as_str(), value.to_string().as_str(), 1);
-        }
-        if !found {
+        if found {
+            processing = processing.replacen(partial.as_str(), value.to_string().as_str(), 1);
+        } else {
             return processing.parse().unwrap();
         }
     }
