@@ -1,8 +1,7 @@
-use std::fs;
-use structopt::StructOpt;
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::hash::{Hash, Hasher};
+use std::fs;
+use structopt::StructOpt;
 
 /// Search for a pattern in a file and display the lines that contain it.
 #[derive(StructOpt)]
@@ -13,10 +12,10 @@ struct Cli {
 
 #[derive(Clone, Hash, Eq, PartialEq)]
 struct Tile {
-	name: String,
-	number: u64,
-	edges: Vec<Vec<bool>>,
-	pixels: Vec<Vec<bool>>,
+    name: String,
+    number: u64,
+    edges: Vec<Vec<bool>>,
+    pixels: Vec<Vec<bool>>,
 }
 
 const TOP: usize = 0;
@@ -34,117 +33,178 @@ fn main() {
     let edges = generate_edge_map(&data);
 
     let categorized = categorize(&edges);
-
     let grid = build_grid(&number_tiles_map, &categorized, &edges, columns);
 
-    for row in grid {
+    for row in &grid {
         for tile in row {
             print!("{} | ", tile.number);
         }
         println!("");
     }
+
+    let full = assemble(&grid);
+
+    let mut variants: Vec<Vec<Vec<bool>>> = Vec::new();
+    let rotated90 = rotate_pixels_90(&full);
+    let rotated180 = rotate_pixels_90(&rotated90);
+    let rotated270 = rotate_pixels_90(&rotated180);
+    let flipped = flip_pixels_horizontal(&full);
+    let flippedrotated90 = rotate_pixels_90(&flipped);
+    let flippedrotated180 = rotate_pixels_90(&flippedrotated90);
+    let flippedrotated270 = rotate_pixels_90(&flippedrotated180);
+
+    variants.push(full.clone());
+    variants.push(rotated90);
+    variants.push(rotated180);
+    variants.push(rotated270);
+    variants.push(flippedrotated90);
+    variants.push(flippedrotated180);
+    variants.push(flippedrotated270);
+
+    for variant in variants {
+        let found = search(&variant);
+        if found > 0 {
+            for row in &variant {
+                for pixel in row {
+                    match pixel {
+                        true => print!("#"),
+                        false => print!("."),
+                    }
+                }
+                println!("");
+            }
+            println!("Found: {}", found);
+            let mut count_pixels = 0;
+            for row in variant {
+                for pixel in row {
+                    if pixel {
+                        count_pixels += 1;
+                    }
+                }
+            }
+            println!("Count Pixel: {}", count_pixels);
+            println!("Result: {}", count_pixels - found * 15);
+            break;
+        }
+    }
 }
 
 fn read_and_parse(path: &str) -> Vec<Tile> {
     let contents = fs::read_to_string(path).expect("Something went wrong reading the file");
-	
-	contents.split("\n\n").map(ToOwned::to_owned).map(|s| parse_tile(s)).collect()	
+
+    contents
+        .split("\n\n")
+        .map(ToOwned::to_owned)
+        .map(|s| parse_tile(s))
+        .collect()
 }
 
 fn parse_tile(tile_strings: String) -> Tile {
-	let parts: Vec<&str> = tile_strings.split("\n").collect();
-	let pixels: Vec<Vec<bool>> = parts[1..].iter().map(|s| s.chars().map(|c| match c { '#' => true, _ => false, }).collect() ).collect();
+    let parts: Vec<&str> = tile_strings.split("\n").collect();
+    let pixels: Vec<Vec<bool>> = parts[1..]
+        .iter()
+        .map(|s| {
+            s.chars()
+                .map(|c| match c {
+                    '#' => true,
+                    _ => false,
+                })
+                .collect()
+        })
+        .collect();
 
-	let number: u64 = parts[0].split(" ").last().unwrap().split(":").next().unwrap().parse().unwrap();
-	let mut result = Tile { name: parts[0].to_string(), pixels: pixels, number: number, edges: Vec::new() };
+    let number: u64 = parts[0]
+        .split(" ")
+        .last()
+        .unwrap()
+        .split(":")
+        .next()
+        .unwrap()
+        .parse()
+        .unwrap();
+    let mut result = Tile {
+        name: parts[0].to_string(),
+        pixels: pixels,
+        number: number,
+        edges: Vec::new(),
+    };
 
-	build_edges(&mut result);
-	result
+    build_edges(&mut result);
+    result
 }
 
 fn build_edges(tile: &mut Tile) {
-	let mut edges = Vec::new();
-	edges.push(tile.pixels[0].clone());
-	edges.push(tile.pixels.iter().map(|r| r.iter().last().unwrap().clone()).collect());
-	edges.push(tile.pixels.iter().last().unwrap().clone());
-	edges.push(tile.pixels.iter().map(|r| r[0]).collect());
-	
-	tile.edges = edges;
+    let mut edges = Vec::new();
+    edges.push(tile.pixels[0].clone());
+    edges.push(
+        tile.pixels
+            .iter()
+            .map(|r| r.iter().last().unwrap().clone())
+            .collect(),
+    );
+    edges.push(tile.pixels.iter().last().unwrap().clone());
+    edges.push(tile.pixels.iter().map(|r| r[0]).collect());
+
+    tile.edges = edges;
 }
 
 fn flip_horizontal(tile: &Tile) -> Tile {
     let mut flipped = tile.clone();
-	flipped.pixels.reverse();
+    flipped.pixels.reverse();
 
-	build_edges(&mut flipped);
+    build_edges(&mut flipped);
 
     flipped
 }
 
-fn flip_vertical(tile: &Tile) -> Tile {
-    let mut flipped = tile.clone();
-	let mut result = Vec::new();
-	for line in &flipped.pixels {
-		let mut reverse_line = line.clone();
-		reverse_line.reverse();
-		result.push(reverse_line);
-	}
-	flipped.pixels = result;
-	build_edges(&mut flipped);
-
-    flipped
+fn flip_pixels_horizontal(pixels: &Vec<Vec<bool>>) -> Vec<Vec<bool>> {
+    let mut result = pixels.clone();
+    result.reverse();
+    result
 }
 
 fn rotate_90(tile: &Tile) -> Tile {
-    print_tile(&tile);
     let mut rotated = tile.clone();
-	let mut result = Vec::new();
-    for _ in 0..tile.pixels.len() {
-        result.push(Vec::new());
-    }
-    for x in (0..tile.pixels.len()).rev() {
-        for y in 0..tile.pixels.len() {
-            result[x].push(tile.pixels[y][x]);
-        }
-    }
-	rotated.pixels = result;
-	print_tile(&rotated);
+    rotated.pixels = rotate_pixels_90(&tile.pixels);
     build_edges(&mut rotated);
 
     rotated
 }
 
-fn rotate_270(tile: &Tile) -> Tile {
-    let mut rotated = tile.clone();
-	let mut result = Vec::new();
-    for _ in 0..tile.pixels.len() {
+fn rotate_pixels_90(pixels: &Vec<Vec<bool>>) -> Vec<Vec<bool>> {
+    let mut result = Vec::new();
+    for _ in 0..pixels.len() {
         result.push(Vec::new());
     }
-    for x in 0..tile.pixels.len() {
-        for y in (0..tile.pixels.len()).rev() {
-            result[x].push(tile.pixels[y][x]);
+    for x in 0..pixels.len() {
+        for y in (0..pixels.len()).rev() {
+            result[x].push(pixels[y][x]);
         }
     }
-	rotated.pixels = result;
-	build_edges(&mut rotated);
 
-    rotated
+    result
 }
 
 fn generate_variants(data: &mut Vec<Tile>) {
     let source = data.clone();
 
     for tile in source {
-        data.push(flip_horizontal(&tile));
-        data.push(flip_vertical(&tile));
-        let rotated270 = rotate_270(&tile);
-        data.push(flip_horizontal(&rotated270));
-        data.push(flip_vertical(&rotated270));
-        data.push(rotated270);
         let rotated90 = rotate_90(&tile);
-        data.push(flip_horizontal(&rotated90));
-        data.push(flip_vertical(&rotated90));
+        let rotated180 = rotate_90(&rotated90);
+        let rotated270 = rotate_90(&rotated180);
+        let flipped = flip_horizontal(&tile);
+        let flippedrotated90 = rotate_90(&flipped);
+        let flippedrotated180 = rotate_90(&flippedrotated90);
+        let flippedrotated270 = rotate_90(&flippedrotated180);
+
+        data.push(tile);
         data.push(rotated90);
+        data.push(rotated180);
+        data.push(rotated270);
+        data.push(flipped);
+        data.push(flippedrotated90);
+        data.push(flippedrotated180);
+        data.push(flippedrotated270);
     }
 }
 
@@ -152,7 +212,10 @@ fn generate_edge_map(tiles: &Vec<Tile>) -> HashMap<Vec<bool>, Vec<Tile>> {
     let mut result: HashMap<Vec<bool>, Vec<Tile>> = HashMap::new();
     for tile in tiles {
         for edge in &tile.edges {
-            result.entry(edge.clone()).or_insert(Vec::new()).push(tile.clone());
+            result
+                .entry(edge.clone())
+                .or_insert(Vec::new())
+                .push(tile.clone());
         }
     }
 
@@ -189,30 +252,138 @@ fn generate_number_tiles_map(tiles: &Vec<Tile>) -> HashMap<u64, Vec<Tile>> {
     let mut result: HashMap<u64, Vec<Tile>> = HashMap::new();
 
     for tile in tiles {
-        result.entry(tile.number).or_insert(Vec::new()).push(tile.clone());
+        result
+            .entry(tile.number)
+            .or_insert(Vec::new())
+            .push(tile.clone());
     }
 
     result
 }
 
-fn build_grid(number_tiles_map: &HashMap<u64, Vec<Tile>>, categorized: &HashMap<u8, Vec<u64>>, edge_map: &HashMap<Vec<bool>, Vec<Tile>>, columns: usize) -> Vec<Vec<Tile>> {
-    let mut result: Vec<Vec<Tile>>;
-
+fn build_grid(
+    number_tiles_map: &HashMap<u64, Vec<Tile>>,
+    categorized: &HashMap<u8, Vec<u64>>,
+    edge_map: &HashMap<Vec<bool>, Vec<Tile>>,
+    columns: usize,
+) -> Vec<Vec<Tile>> {
     for corner in &categorized[&4] {
-        for tile in find_corner_orientations(&number_tiles_map[&corner], &vec!(RIGHT, BOTTOM), &edge_map) {
-            match build_from_corner(tile, number_tiles_map, categorized, edge_map, columns) {
+        for tile in
+            find_corner_orientations(&number_tiles_map[&corner], &vec![RIGHT, BOTTOM], &edge_map)
+        {
+            match build_from_corner(tile, number_tiles_map, categorized, columns) {
                 Some(result) => {
                     return result;
-                },
+                }
                 None => (),
             }
         }
     }
 
-    return vec!();
+    return vec![];
 }
 
-fn build_from_corner(tile: Tile, number_tiles_map: &HashMap<u64, Vec<Tile>>, categorized: &HashMap<u8, Vec<u64>>, edge_map: &HashMap<Vec<bool>, Vec<Tile>>, columns: usize) -> Option<Vec<Vec<Tile>>> {
+fn search(grid: &Vec<Vec<bool>>) -> u32 {
+    let pattern: Vec<Vec<bool>> = vec![
+        vec![
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, true, false,
+        ],
+        vec![
+            true, false, false, false, false, true, true, false, false, false, false, true, true,
+            false, false, false, false, true, true, true,
+        ],
+        vec![
+            false, true, false, false, true, false, false, true, false, false, true, false, false,
+            true, false, false, true, false, false, false,
+        ],
+    ];
+
+    let mut found: u32 = 0;
+
+    for y in 1..grid.len() - 1 {
+        // checkin middle pattern first, so top and bottom row can't match
+        let mut offset = 0;
+        for _ in 0..grid.len() / pattern.len() {
+            match match_pattern(&grid[y], &pattern[1], offset) {
+                Some(a) => {
+                    if match_pattern_position(&grid[y + 1], &pattern[2], a)
+                        && match_pattern_position(&grid[y - 1], &pattern[0], a)
+                    {
+                        found += 1;
+                        offset = a + pattern.len(); // there might be more
+                        println!("Found, but maybe more after {}", offset);
+                    }
+                }
+                None => {
+                    break;
+                }
+            }
+        }
+    }
+
+    found
+}
+
+fn match_pattern_position(line: &Vec<bool>, pattern: &Vec<bool>, offset: usize) -> bool {
+    if offset + pattern.len() >= line.len() {
+        return false;
+    }
+    for s in 0..pattern.len() {
+        match pattern[s] {
+            true => {
+                if line[offset + s] {
+                    if s == pattern.len() - 1 {
+                        return true;
+                    }
+                } else {
+                    break;
+                }
+            }
+            false => {
+                if s == pattern.len() - 1 {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+fn match_pattern(line: &Vec<bool>, pattern: &Vec<bool>, offset: usize) -> Option<usize> {
+    for x in offset..line.len() {
+        if match_pattern_position(line, pattern, x) {
+            return Some(x);
+        }
+    }
+
+    None
+}
+
+fn assemble(grid: &Vec<Vec<Tile>>) -> Vec<Vec<bool>> {
+    let mut result: Vec<Vec<bool>> = Vec::new();
+    let mut y = 0;
+    for row in grid {
+        for j in 1..row[0].pixels.len() - 1 {
+            result.push(Vec::new());
+            for i in 0..row.len() {
+                for x in 1..row[i].pixels.len() - 1 {
+                    result[y].push(row[i].pixels[j][x]);
+                }
+            }
+            y += 1;
+        }
+    }
+
+    result
+}
+
+fn build_from_corner(
+    tile: Tile,
+    number_tiles_map: &HashMap<u64, Vec<Tile>>,
+    categorized: &HashMap<u8, Vec<u64>>,
+    columns: usize,
+) -> Option<Vec<Vec<Tile>>> {
     let mut result: Vec<Vec<Tile>> = Vec::new();
     let mut used: HashSet<u64> = HashSet::new();
     for _ in 0..columns {
@@ -227,7 +398,10 @@ fn build_from_corner(tile: Tile, number_tiles_map: &HashMap<u64, Vec<Tile>>, cat
             }
             let next_tile_numbers: Vec<u64>;
             let mut edge_match: HashMap<usize, Vec<bool>> = HashMap::new();
-            if (y == 0 && x == columns - 1) || (y == columns - 1 && x == 0) || (y == columns - 1 && x == columns - 1) {
+            if (y == 0 && x == columns - 1)
+                || (y == columns - 1 && x == 0)
+                || (y == columns - 1 && x == columns - 1)
+            {
                 // corner
                 next_tile_numbers = categorized[&4].clone();
             } else if y == 0 || y == columns - 1 || x == 0 || x == columns - 1 {
@@ -240,13 +414,13 @@ fn build_from_corner(tile: Tile, number_tiles_map: &HashMap<u64, Vec<Tile>>, cat
 
             if y == 0 {
                 // top row
-                edge_match.insert(LEFT, result[0][x-1].edges[RIGHT].clone());
+                edge_match.insert(LEFT, result[0][x - 1].edges[RIGHT].clone());
             } else if x == 0 {
                 // left border
-                edge_match.insert(TOP, result[y-1][0].edges[BOTTOM].clone());
+                edge_match.insert(TOP, result[y - 1][0].edges[BOTTOM].clone());
             } else {
-                edge_match.insert(LEFT, result[y][x-1].edges[RIGHT].clone());
-                edge_match.insert(TOP, result[y-1][x].edges[BOTTOM].clone());
+                edge_match.insert(LEFT, result[y][x - 1].edges[RIGHT].clone());
+                edge_match.insert(TOP, result[y - 1][x].edges[BOTTOM].clone());
             }
 
             let mut next_tiles: Vec<Tile> = Vec::new();
@@ -262,16 +436,16 @@ fn build_from_corner(tile: Tile, number_tiles_map: &HashMap<u64, Vec<Tile>>, cat
                 Some(tile) => {
                     result[y].push(tile.clone());
                     used.insert(tile.number);
-                },
+                }
                 None => {
-                    for row in result {
+                    /* for row in result {
                         for tile in row {
                             print!("{} | ", tile.number);
                         }
                         println!("");
-                    }
+                    } */
                     return None;
-                },
+                }
             }
         }
     }
@@ -282,11 +456,12 @@ fn build_from_corner(tile: Tile, number_tiles_map: &HashMap<u64, Vec<Tile>>, cat
 fn find_edge_match(tiles: &Vec<Tile>, edge_match: &HashMap<usize, Vec<bool>>) -> Option<Tile> {
     for tile in tiles {
         let mut matches = 0;
-        println!("Tile: {}", tile.number);
+        //println!("Tile: {}", tile.number);
         for (position, edge) in edge_match {
-            print_edge(&edge);
-            print_edge(&tile.edges[*position]);
-            println!("");
+            /*             print_edge(&edge);
+                       print_edge(&tile.edges[*position]);
+                       println!("");
+            */
             if tile.edges[*position] == *edge {
                 matches += 1;
             }
@@ -295,11 +470,15 @@ fn find_edge_match(tiles: &Vec<Tile>, edge_match: &HashMap<usize, Vec<bool>>) ->
             return Some(tile.clone());
         }
     }
-    
+
     None
 }
 
-fn find_corner_orientations(tiles: &Vec<Tile>, sides: &Vec<usize>, edge_map: &HashMap<Vec<bool>, Vec<Tile>>) -> Vec<Tile> {
+fn find_corner_orientations(
+    tiles: &Vec<Tile>,
+    sides: &Vec<usize>,
+    edge_map: &HashMap<Vec<bool>, Vec<Tile>>,
+) -> Vec<Tile> {
     let mut result: Vec<Tile> = Vec::new();
 
     for tile in tiles {
@@ -315,21 +494,4 @@ fn find_corner_orientations(tiles: &Vec<Tile>, sides: &Vec<usize>, edge_map: &Ha
     }
 
     result
-}
-
-fn print_edge(edge: &Vec<bool>) {
-    for value in edge {
-        print!("{}", match value { true => '#', _ => '.' });
-    }
-    println!("");
-}
-
-fn print_tile(tile: &Tile) {
-	println!("{}", tile.name);
-	for line in &tile.pixels {
-		for row in &*line {
-			print!("{}", match row { true => "#", false => ".", });
-		}
-		println!("");
-	}
 }
