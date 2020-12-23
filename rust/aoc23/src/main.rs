@@ -1,6 +1,7 @@
 use std::fs;
 use structopt::StructOpt;
-use std::cmp;
+use std::collections::VecDeque;
+use std::time::SystemTime;
 
 /// Search for a pattern in a file and display the lines that contain it.
 #[derive(StructOpt)]
@@ -17,53 +18,43 @@ fn main() {
 
     let mut part2 = start.clone();
     for i in max..=1000000 {
-        part2.push(i);
+        part2.push_back(i);
     }
 
     play(&part2, min, 1000000, 10000000);
 }
 
-fn read_and_parse(path: &str) -> Vec<u32> {
+fn read_and_parse(path: &str) -> VecDeque<u32> {
     let contents = fs::read_to_string(path).expect("Something went wrong reading the file");
 
     contents.chars().map(|c| c.to_digit(10).unwrap()).collect()
 }
 
-fn play(start: &Vec<u32>, min: u32, max: u32, moves: u32) {
+fn play(start: &VecDeque<u32>, min: u32, max: u32, moves: u32) {
     let mut playfield = start.clone();
-    let mut current_index = 0;
-    let cups_count = playfield.len();
+    let now = SystemTime::now();
     for i in 0..moves {
-        let current_value = playfield[current_index];
+        let current_value = playfield[0];
         if i % 10000 == 0 {
+            println!("{:?}", now.elapsed().unwrap());
             println!("--- Move {} ---", i+1);
         }
-        // print_cups(&playfield, current_index);
-        let mut pick: Vec<u32> = playfield.drain(current_index+1..cmp::min(current_index+4,cups_count)).collect();
-        if pick.len() < 3 {
-            for _ in 0..(3-pick.len()) {
-                pick.push(playfield.remove(0));
-            }
-        }
-        // print_pick(&pick);
+        //print_cups(&playfield, 0);
+        let mut pick: VecDeque<u32> = playfield.drain(1..=3).collect();
+        //print_pick(&pick);
         let destination = find_destination(current_value, &pick, min, max);
-        // println!("destination: {}", destination);
-        let insert_position = playfield.iter().position(|&x| x == destination).unwrap() + 1;
-        for i in 0..pick.len() {
-            if i + insert_position < cups_count {
-                // println!("Insert: {} at {}", pick[i], i + insert_position);
-                playfield.insert(i + insert_position, pick[i]);
-            } else {
-                // println!("Insert: {} at {}", pick[i], (i + insert_position) - cups_count);
-                playfield.insert((i + insert_position) - cups_count, pick[i]);
-            }
+        //println!("destination: {}", destination);
+        if playfield[playfield.len()-1] == destination {
+            pick.append(&mut playfield);
+            playfield = pick;
+        } else {
+            let insert_position = playfield.iter().position(|&x| x == destination).unwrap() + 1;
+            let mut tail = playfield.split_off(insert_position);
+            playfield.append(&mut pick);
+            playfield.append(&mut tail);
         }
-        current_index = playfield.iter().position(|&x| x == current_value).unwrap();
-        // print_cups(&playfield, current_index);
-        current_index += 1;
-        if current_index >= playfield.len() {
-            current_index = 0;
-        }
+        //print_cups(&playfield, 0);
+        playfield.rotate_left(1);
     }
 
     let index_1 = playfield.iter().position(|&x| x == 1).unwrap();
@@ -82,7 +73,7 @@ fn play(start: &Vec<u32>, min: u32, max: u32, moves: u32) {
     }
 }
 
-fn find_destination(value: u32, pick: &Vec<u32>, min: u32, max: u32) -> u32 {
+fn find_destination(value: u32, pick: &VecDeque<u32>, min: u32, max: u32) -> u32 {
     let mut destination = value;
     loop {
         if destination == min {
@@ -96,7 +87,7 @@ fn find_destination(value: u32, pick: &Vec<u32>, min: u32, max: u32) -> u32 {
     }
 }
 
-fn find_min_max(values: &Vec<u32>) -> (u32, u32) {
+fn find_min_max(values: &VecDeque<u32>) -> (u32, u32) {
     let mut min = 1000;
     let mut max = 0;
 
@@ -112,7 +103,7 @@ fn find_min_max(values: &Vec<u32>) -> (u32, u32) {
     (min, max)
 }
 
-fn print_cups(playfield: &Vec<u32>, current_index: usize) {
+fn print_cups(playfield: &VecDeque<u32>, current_index: usize) {
     print!("cups: ");
     for i in 0..playfield.len() {
         if i == current_index {
@@ -124,7 +115,7 @@ fn print_cups(playfield: &Vec<u32>, current_index: usize) {
     println!("");
 }
 
-fn print_pick(pick: &Vec<u32>) {
+fn print_pick(pick: &VecDeque<u32>) {
     print!("pick up: ");
     for value in pick {
         print!("{} ", value);
