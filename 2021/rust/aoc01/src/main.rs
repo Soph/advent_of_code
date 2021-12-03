@@ -43,11 +43,11 @@ fn sweep1(depths: &Vec<i32>) {
 
 fn sweep2(depths: Vec<i32>) {
     let mut increases = 0;
-    let mut window_a = depths[0]+depths[1]+depths[2];
+    let mut window_a = depths[0] + depths[1] + depths[2];
     let mut window_b;
 
     for n in 1..depths.len() {
-        window_b = depths[n] + depths[n+1] + depths[n+2];
+        window_b = depths[n] + depths[n + 1] + depths[n + 2];
         if window_a < window_b {
             increases += 1;
         }

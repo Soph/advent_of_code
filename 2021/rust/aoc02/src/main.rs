@@ -25,10 +25,7 @@ fn main() {
 fn read_and_parse(path: &str) -> Vec<Movement> {
     let contents = fs::read_to_string(path).expect("Something went wrong reading the file");
 
-    contents
-        .split("\n")
-        .map(|s| parse_movements(&s))
-        .collect()
+    contents.split("\n").map(|s| parse_movements(&s)).collect()
 }
 
 fn parse_movements(line: &str) -> Movement {
@@ -39,7 +36,6 @@ fn parse_movements(line: &str) -> Movement {
         amount: parts[1].parse().unwrap(),
     }
 }
-
 
 fn move1(movements: &Vec<Movement>) {
     let mut vertical = 0;
@@ -54,7 +50,12 @@ fn move1(movements: &Vec<Movement>) {
         }
     }
 
-    println!("Found {}, {} -> {}", horizontal, vertical, horizontal * vertical);
+    println!(
+        "Found {}, {} -> {}",
+        horizontal,
+        vertical,
+        horizontal * vertical
+    );
 }
 
 fn move2(movements: &Vec<Movement>) {
@@ -69,10 +70,16 @@ fn move2(movements: &Vec<Movement>) {
             "forward" => {
                 horizontal = horizontal + movement.amount;
                 depth = depth + aim * movement.amount;
-            },
+            }
             _ => (),
         }
     }
 
-    println!("Found {}, {}, {} -> {}", horizontal, depth, aim, horizontal * depth);
+    println!(
+        "Found {}, {}, {} -> {}",
+        horizontal,
+        depth,
+        aim,
+        horizontal * depth
+    );
 }
