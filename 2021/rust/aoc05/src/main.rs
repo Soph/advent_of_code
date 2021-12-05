@@ -82,18 +82,15 @@ fn run1(lines: &Vec<Line>) {
             if points[&point] > 1 {
                 more_than_one.insert(point);
             }
-            if dx == 0 {
-                if dy > 0 {
-                    y -= 1;
-                } else {
-                    y += 1;
-                }
-            } else {
-                if dx > 0 {
-                    x -= 1;
-                } else {
-                    x += 1;
-                }
+            if dy > 0 {
+                y -= 1;
+            } else if dy < 0 {
+                y += 1;
+            }
+            if dx > 0 {
+                x -= 1;
+            } else if dx < 0 {
+                x += 1;
             }
         }
     }
@@ -120,32 +117,15 @@ fn run2(lines: &Vec<Line>) {
             if points[&point] > 1 {
                 more_than_one.insert(point);
             }
-            if dx == 0 {
-                if dy > 0 {
-                    y -= 1;
-                } else {
-                    y += 1;
-                }
-            } else if dy == 0 {
-                if dx > 0 {
-                    x -= 1;
-                } else {
-                    x += 1;
-                }
-            } else {
-                if dx > 0 && dy > 0 {
-                    x -= 1;
-                    y -= 1;
-                } else if dx < 0 && dy > 0 {
-                    x += 1;
-                    y -= 1;
-                } else if dx > 0 && dy < 0 {
-                    x -= 1;
-                    y += 1;
-                } else if dx < 0 && dy < 0 {
-                    x += 1;
-                    y += 1;
-                }
+            if dy > 0 {
+                y -= 1;
+            } else if dy < 0 {
+                y += 1;
+            }
+            if dx > 0 {
+                x -= 1;
+            } else if dx < 0 {
+                x += 1;
             }
         }
     }
