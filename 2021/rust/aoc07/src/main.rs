@@ -54,9 +54,7 @@ fn calc2(crabs: &Vec<i64>) {
     for i in min..=max {
         let mut sum = 0;
         for j in data.iter() {
-            for x in 1..=(i - j).abs() {
-                sum += x * 1;
-            }
+            sum += (i - j).abs()*((i - j).abs()+1)/2;
         }
         if sum < min_sum || min_sum == 0 {
             min_sum = sum;
