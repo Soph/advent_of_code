@@ -20,6 +20,7 @@ fn main() {
     let lines = read_and_parse(&args.path);
 
     count1(&lines);
+    count2(&lines);
 }
 
 fn read_and_parse(path: &str) -> Vec<Line> {
@@ -70,24 +71,139 @@ fn count1(lines: &Vec<Line>) {
         }
     }
 
-    println!("{}", count);
+    println!("Part1: {}", count);
 }
 
-fn find_mapping(line: Line) -> HashMap<String, u64> {
-    let mut mapping = HashMap::new();
+fn count2(lines: &Vec<Line>) {
+    let mut sum: u64 = 0;
 
-    return mapping;
+    for line in lines {
+        let mapping = find_mapping(line);
+        let mut digit = "".to_owned();
+        for output in &line.outputs {
+            let sorted = sort_letters(output.clone());
+            digit.push_str(&mapping[&sorted].to_string());
+        }
+        sum += digit.parse::<u64>().unwrap();
+    }
+
+    println!("Part2: {}", sum);
 }
 
-fn convert(found_mapping: HashMap<String, String>) -> HashMap<String, u64> {
+fn find_mapping(line: &Line) -> HashMap<String, u64> {
+    let mut char_mapping = char_map();
+    let mut five_char_count: HashMap<char, u64> = HashMap::new();
+    let mut six_char_count: HashMap<char, u64> = HashMap::new();
+
+    for signal in line.signals.clone() {
+        let s: Vec<char> = signal.chars().collect();
+        match signal.len() {
+            2 => {
+                for c in s {
+                    let mut chars = char_mapping[&c].clone();
+                    chars.retain(|&x| x == 'c' || x == 'f');
+                    char_mapping.insert(c, chars);
+                }
+            }
+            3 => {
+                for c in s {
+                    let mut chars = char_mapping[&c].clone();
+                    chars.retain(|&x| x == 'a' || x == 'c' || x == 'f');
+                    char_mapping.insert(c, chars);
+                }
+            }
+            4 => {
+                for c in s {
+                    let mut chars = char_mapping[&c].clone();
+                    chars.retain(|&x| x == 'b' || x == 'c' || x == 'd' || x == 'f');
+                    char_mapping.insert(c, chars);
+                }
+            }
+            5 => {
+                for c in s {
+                    *five_char_count.entry(c).or_insert(0) += 1;
+                }
+            }
+            6 => {
+                for c in s {
+                    *six_char_count.entry(c).or_insert(0) += 1;
+                }
+            }
+            _ => (),
+        }
+    }
+
+    for (k, v) in five_char_count {
+        if v == 3 {
+            let mut chars = char_mapping[&k].clone();
+            chars.retain(|&x| x == 'a' || x == 'd' || x == 'g');
+            char_mapping.insert(k, chars);
+        }
+    }
+
+    for (k, v) in six_char_count {
+        if v == 3 {
+            let mut chars = char_mapping[&k].clone();
+            chars.retain(|&x| x == 'a' || x == 'b' || x == 'f' || x == 'g');
+            char_mapping.insert(k, chars);
+        }
+    }
+
+    loop {
+        for (c, chars) in char_mapping.clone() {
+            if chars.len() == 1 {
+                for (k, v) in char_mapping.clone() {
+                    if k == c {
+                        continue;
+                    }
+                    let mut cs = v.clone();
+                    cs.retain(|&x| x != chars[0]);
+                    char_mapping.insert(k, cs);
+                }
+            }
+        }
+        let mut more_then_one = false;
+        for (_, chars) in char_mapping.clone() {
+            if chars.len() != 1 {
+                more_then_one = true;
+            }
+        }
+        if !more_then_one {
+            break;
+        }
+    }
+
+    let mut inverted_mapping: HashMap<char, char> = HashMap::new();
+    for (k, v) in char_mapping {
+        inverted_mapping.insert(v[0], k);
+    }
+
+    return convert(inverted_mapping);
+}
+
+fn char_map() -> HashMap<char, Vec<char>> {
+    let mut map = HashMap::new();
+
+    map.insert('a', vec!['a', 'b', 'c', 'd', 'e', 'f', 'g']);
+    map.insert('b', vec!['a', 'b', 'c', 'd', 'e', 'f', 'g']);
+    map.insert('c', vec!['a', 'b', 'c', 'd', 'e', 'f', 'g']);
+    map.insert('d', vec!['a', 'b', 'c', 'd', 'e', 'f', 'g']);
+    map.insert('e', vec!['a', 'b', 'c', 'd', 'e', 'f', 'g']);
+    map.insert('f', vec!['a', 'b', 'c', 'd', 'e', 'f', 'g']);
+    map.insert('g', vec!['a', 'b', 'c', 'd', 'e', 'f', 'g']);
+
+    return map;
+}
+
+fn convert(found_mapping: HashMap<char, char>) -> HashMap<String, u64> {
     let mut mapping = HashMap::new();
 
     for (k, v) in digits() {
         let mut key = "".to_owned();
         for letter in k.chars() {
-            key.push_str(&found_mapping[&letter.to_string()]);
+            key.push(found_mapping[&letter]);
         }
-        mapping.insert(key, v);
+        mapping.insert(sort_letters(key), v);
     }
 
     return mapping;
