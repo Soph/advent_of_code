@@ -30,6 +30,9 @@ fn read_and_parse(path: &str) -> Vec<Vec<char>> {
 fn check1(chunks: &Vec<Vec<char>>) -> Vec<Vec<char>> {
     let mut sum = 0;
     let mut filtered_chunks = vec![];
+    let mapping: HashMap<char, char> =
+        HashMap::from([(')', '('), ('>', '<'), ('}', '{'), (']', '[')]);
+
     for chunk in chunks {
         let mut opens: Vec<char> = vec![];
         let mut broken = false;
@@ -37,47 +40,15 @@ fn check1(chunks: &Vec<Vec<char>>) -> Vec<Vec<char>> {
         for c in chunk {
             match c {
                 '(' | '<' | '{' | '[' => opens.push(*c),
-                ')' => match opens.last() {
-                    Some('(') => {
-                        opens.pop();
-                    }
-                    _ => {
+                _ => {
+                    if opens.last().unwrap() != mapping.get(c).unwrap() {
                         sum += value_per_bracket(c);
                         broken = true;
                         break;
-                    }
-                },
-                '>' => match opens.last() {
-                    Some('<') => {
+                    } else {
                         opens.pop();
                     }
-                    _ => {
-                        sum += value_per_bracket(c);
-                        broken = true;
-                        break;
-                    }
-                },
-                ']' => match opens.last() {
-                    Some('[') => {
-                        opens.pop();
-                    }
-                    _ => {
-                        sum += value_per_bracket(c);
-                        broken = true;
-                        break;
-                    }
-                },
-                '}' => match opens.last() {
-                    Some('{') => {
-                        opens.pop();
-                    }
-                    _ => {
-                        sum += value_per_bracket(c);
-                        broken = true;
-                        break;
-                    }
-                },
-                _ => (),
+                }
             }
         }
         if !broken {
