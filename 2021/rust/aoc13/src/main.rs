@@ -71,18 +71,16 @@ fn run1(points: &Vec<Point>, foldings: &Vec<(String, i32)>) {
             } else if folding.0 == "y" && point.y > folding.1 {
                 new_point.y = folding.1 * 2 - point.y;
             }
-            if !new_map.contains(&new_point.clone()) {
-                new_map.insert(new_point);
-            }
+            new_map.insert(new_point);
         }
         map = new_map;
         count += 1;
-        println!("{}: {}", count, map.len());
+        if count == 1 {
+            println!("First Fold: {}", map.len());
+        }
     }
 
     pretty_print(&map);
-
-    println!("{}", map.len());
 }
 
 fn pretty_print(map: &HashSet<Point>) {
