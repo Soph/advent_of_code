@@ -9,12 +9,6 @@ struct Cli {
     path: String,
 }
 
-#[derive(Clone, Hash, Debug, PartialEq, Eq)]
-struct Point {
-    x: i32,
-    y: i32,
-}
-
 fn main() {
     let args = Cli::from_args();
     let (pattern, insertion_rules) = read_and_parse(&args.path);
@@ -89,7 +83,7 @@ fn read_and_parse2(path: &str) -> (String, HashMap<String, Vec<String>>) {
 }
 
 fn run2(pattern: &String, insertion_rules: &HashMap<String, Vec<String>>) {
-    let mut run_pattern: HashMap<String, u128> = HashMap::new();
+    let mut run_pattern: HashMap<String, u64> = HashMap::new();
     let pattern_chars: Vec<char> = pattern.chars().collect();
     for i in 1..pattern_chars.len() {
         let mut key: String = "".to_string();
@@ -100,7 +94,7 @@ fn run2(pattern: &String, insertion_rules: &HashMap<String, Vec<String>>) {
     }
 
     for _ in 0..40 {
-        let mut new_pattern: HashMap<String, u128> = HashMap::new();
+        let mut new_pattern: HashMap<String, u64> = HashMap::new();
         for (pattern, count) in &run_pattern {
             for rule in insertion_rules.get(pattern).unwrap() {
                 *new_pattern.entry(rule.clone()).or_insert(0) += count;
@@ -111,8 +105,8 @@ fn run2(pattern: &String, insertion_rules: &HashMap<String, Vec<String>>) {
     count2(&pattern, &run_pattern);
 }
 
-fn count2(pattern: &String, run_pattern: &HashMap<String, u128>) {
-    let mut letter_count: HashMap<char, u128> = HashMap::new();
+fn count2(pattern: &String, run_pattern: &HashMap<String, u64>) {
+    let mut letter_count: HashMap<char, u64> = HashMap::new();
     for (letters, count) in run_pattern {
         *letter_count
             .entry(letters.chars().next().unwrap())
