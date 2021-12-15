@@ -27,6 +27,10 @@ fn main() {
     let cave = read_and_parse(&args.path);
 
     find_paths(&cave);
+
+    let part2_cave = modify_cave(&cave);
+
+    find_paths(&part2_cave)
 }
 
 fn read_and_parse(path: &str) -> Vec<Vec<i32>> {
@@ -40,7 +44,7 @@ fn read_and_parse(path: &str) -> Vec<Vec<i32>> {
 }
 
 fn find_paths(cave: &Vec<Vec<i32>>) {
-    let search_matrix: Vec<(i32, i32)> = vec![(0, 1), (1, 0), (0, -1), (-1, 0)];
+    let search_matrix: Vec<(i32, i32)> = vec![(0, 1), (1, 0)];
     let mut unvisited: HashSet<Point> = HashSet::new();
     let mut total_risks: HashMap<Point, i32> = HashMap::new();
     for y in 0..cave.len() {
@@ -72,7 +76,7 @@ fn find_paths(cave: &Vec<Vec<i32>>) {
                 let node = Point { x: new_x, y: new_y };
                 if unvisited.contains(&node) {
                     let risk = *total_risks.get(&node).unwrap();
-                    let new_risk = current_risk + cave[new_x as usize][new_y as usize];
+                    let new_risk = current_risk + cave[new_y as usize][new_x as usize];
                     if risk > new_risk {
                         total_risks.insert(node.clone(), new_risk);
                         if node.x == cave[0].len() as i32 - 1 && node.y == cave.len() as i32 - 1 {
@@ -83,7 +87,9 @@ fn find_paths(cave: &Vec<Vec<i32>>) {
                 }
             }
         }
-        println!("{}", unvisited.len());
+        if unvisited.len() % 100 == 0 {
+            println!("{}", unvisited.len());
+        }
         current_node = find_min_unvisited(&unvisited, &total_risks);
     }
 }
@@ -100,4 +106,30 @@ fn find_min_unvisited(unvisited: &HashSet<Point>, total_risks: &HashMap<Point, i
     }
 
     return min_node;
+}
+
+fn modify_cave(cave: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    let mut new_cave = vec![];
+
+    for y in 0..cave.len() * 5 {
+        let mut x_cave = vec![];
+        for x in 0..cave[0].len() * 5 {
+            let mut new_value = cave[y % cave.len()][x % cave.len()]
+                + (x as i32 / cave[0].len() as i32)
+                + (y as i32 / cave.len() as i32);
+            if new_value > 9 {
+                new_value = new_value - 9;
+            }
+            x_cave.push(new_value);
+        }
+        new_cave.push(x_cave.clone());
+    }
+
+    for y in 0..new_cave.len() {
+        for x in 0..new_cave[0].len() {
+            print!("{}", new_cave[y][x])
+        }
+        println!("");
+    }
+    return new_cave;
 }
