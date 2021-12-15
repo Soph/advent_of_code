@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fs;
 use structopt::StructOpt;
 
@@ -38,88 +40,64 @@ fn read_and_parse(path: &str) -> Vec<Vec<i32>> {
 }
 
 fn find_paths(cave: &Vec<Vec<i32>>) {
-    let risks = find_path2(
-        &cave,
-        Point {
-            x: 0,
-            y: 0,
-        },
-        0,
-    );
-    let mut min_risk = std::u32::MAX;
-    for risk in risks {
-        if risk < min_risk {
-            min_risk = risk;
-        }
-    }
-
-    println!("Part1: {}", min_risk);
-}
-
-fn find_path(cave: &Vec<Vec<i32>>, path: &Path) -> Vec<Path> {
-    let mut paths: Vec<Path> = vec![];
-    let search_matrix: Vec<(i32, i32)> = vec![
-        (0, 1),
-        (1, 0),
-    ];
-
-    for (dy, dx) in &search_matrix {
-        let new_x = path.points.last().unwrap().x + dx;
-        let new_y = path.points.last().unwrap().y + dy;
-
-        if new_x >= 0
-            && new_x < cave[0].len() as i32
-            && new_y >= 0
-            && new_y < cave.len() as i32
-        {
-            let next = Point {
-                x: new_x as i32,
-                y: new_y as i32,
-            };
-            let mut new_path = path.clone();
-            if new_path.points.contains(&next) {
+    let search_matrix: Vec<(i32, i32)> = vec![(0, 1), (1, 0), (0, -1), (-1, 0)];
+    let mut unvisited: HashSet<Point> = HashSet::new();
+    let mut total_risks: HashMap<Point, i32> = HashMap::new();
+    for y in 0..cave.len() {
+        for x in 0..cave[0].len() {
+            if x == 0 && y == 0 {
                 continue;
             }
-            new_path.points.push(next.clone());
-            new_path.risk += cave[new_y as usize][new_x as usize] as u32;
-            if next.x + 1 == cave[0].len() as i32 && next.y + 1 == cave.len() as i32 {
-                paths.push(new_path);
-            } else {
-                paths.append(&mut find_path(cave, &new_path));
-            }
+            let point = Point {
+                x: x as i32,
+                y: y as i32,
+            };
+            unvisited.insert(point.clone());
+            total_risks.insert(point.clone(), std::i32::MAX);
         }
     }
 
-    return paths;
+    let mut current_node = Point { x: 0, y: 0 };
+    total_risks.insert(current_node.clone(), 0);
+
+    loop {
+        let current_risk = total_risks.get(&current_node).unwrap().clone();
+        unvisited.remove(&current_node);
+        for (dy, dx) in &search_matrix {
+            let new_x = current_node.x + dx;
+            let new_y = current_node.y + dy;
+
+            if new_x >= 0 && new_x < cave[0].len() as i32 && new_y >= 0 && new_y < cave.len() as i32
+            {
+                let node = Point { x: new_x, y: new_y };
+                if unvisited.contains(&node) {
+                    let risk = *total_risks.get(&node).unwrap();
+                    let new_risk = current_risk + cave[new_x as usize][new_y as usize];
+                    if risk > new_risk {
+                        total_risks.insert(node.clone(), new_risk);
+                        if node.x == cave[0].len() as i32 - 1 && node.y == cave.len() as i32 - 1 {
+                            println!("{}", new_risk);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        println!("{}", unvisited.len());
+        current_node = find_min_unvisited(&unvisited, &total_risks);
+    }
 }
 
-fn find_path2(cave: &Vec<Vec<i32>>, last: Point, risk: u32) -> Vec<u32> {
-    let mut paths: Vec<u32> = vec![];
-    let search_matrix: Vec<(i32, i32)> = vec![
-        (0, 1),
-        (1, 0),
-    ];
-
-    for (dy, dx) in &search_matrix {
-        let new_x = last.x + dx;
-        let new_y = last.y + dy;
-
-        if new_x >= 0
-            && new_x < cave[0].len() as i32
-            && new_y >= 0
-            && new_y < cave.len() as i32
-        {
-            let next = Point {
-                x: new_x as i32,
-                y: new_y as i32,
-            };
-            if next.x + 1 == cave[0].len() as i32 && next.y + 1 == cave.len() as i32 {
-                paths.push(risk + cave[new_y as usize][new_x as usize] as u32);
-            } else {
-                paths.append(&mut find_path2(cave, next, risk + cave[new_y as usize][new_x as usize] as u32));
-            }
+fn find_min_unvisited(unvisited: &HashSet<Point>, total_risks: &HashMap<Point, i32>) -> Point {
+    let mut min_risk = std::i32::MAX;
+    let mut min_node = Point { x: 0, y: 0 };
+    for node in unvisited {
+        let risk = total_risks.get(&node).unwrap().clone();
+        if risk < min_risk {
+            min_risk = risk;
+            min_node = node.clone();
         }
     }
 
-    return paths;
+    return min_node;
 }
