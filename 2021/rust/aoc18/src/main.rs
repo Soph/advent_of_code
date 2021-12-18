@@ -21,6 +21,18 @@ fn main() {
 
     println!("{}", result);
     println!("{}", calc_magnitude(result));
+
+    let mut max = 0;
+    for i in 0..lines.len() {
+        for j in 0..lines.len() {
+            let magnitude = calc_magnitude(reduce_line(add_lines(lines[i].clone(), lines[j].clone())));
+            if magnitude > max {
+                max = magnitude;
+            }
+        }
+    }
+
+    println!("Max: {}", max);
 }
 
 fn read_and_parse(path: &str) -> Vec<String> {
