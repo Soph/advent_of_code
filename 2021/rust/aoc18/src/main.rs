@@ -25,7 +25,8 @@ fn main() {
     let mut max = 0;
     for i in 0..lines.len() {
         for j in 0..lines.len() {
-            let magnitude = calc_magnitude(reduce_line(add_lines(lines[i].clone(), lines[j].clone())));
+            let magnitude =
+                calc_magnitude(reduce_line(add_lines(lines[i].clone(), lines[j].clone())));
             if magnitude > max {
                 max = magnitude;
             }
@@ -58,35 +59,38 @@ fn explode_line(line: &String, once: bool) -> String {
                 '[' => {
                     depth += 1;
                     result.push(chars[i]);
-                },
+                }
                 ']' => {
                     depth -= 1;
                     result.push(chars[i]);
-                },
+                }
                 ',' => {
-                    if chars[i-1].to_digit(10).is_some() && chars[i+1].to_digit(10).is_some() && depth >= 5 {
+                    if chars[i - 1].to_digit(10).is_some()
+                        && chars[i + 1].to_digit(10).is_some()
+                        && depth >= 5
+                    {
                         // number pair!
                         exploded = true;
                         // explode!
-                        let mut start_pos = i-1;
+                        let mut start_pos = i - 1;
                         while chars[start_pos].to_digit(10).is_some() {
                             start_pos -= 1;
                         }
-                        let mut end_pos = i+1;
+                        let mut end_pos = i + 1;
                         while chars[end_pos].to_digit(10).is_some() {
                             end_pos += 1;
                         }
                         //println!("Pair: {}", chars[start_pos+1..end_pos].iter().collect::<String>());
                         // left number
-                        let mut number_string = format!("{}", chars[start_pos+1]);
-                        for j in start_pos+2..i {
+                        let mut number_string = format!("{}", chars[start_pos + 1]);
+                        for j in start_pos + 2..i {
                             number_string.push(chars[j]);
                         }
                         //println!("Number String: {}", number_string);
                         let left_number = number_string.parse::<u64>().unwrap();
                         // right number
-                        number_string = format!("{}", chars[i+1]);
-                        for j in i+2..end_pos {
+                        number_string = format!("{}", chars[i + 1]);
+                        for j in i + 2..end_pos {
                             number_string.push(chars[j]);
                         }
                         //println!("Number String: {}", number_string);
@@ -107,7 +111,10 @@ fn explode_line(line: &String, once: bool) -> String {
                                     j += 1;
                                     start_pos -= 1;
                                 }
-                                let number_string = format!("{}", chars[start_pos+1..=char_pos].iter().collect::<String>());
+                                let number_string = format!(
+                                    "{}",
+                                    chars[start_pos + 1..=char_pos].iter().collect::<String>()
+                                );
 
                                 result = format!(
                                     "{}{}{}",
@@ -123,20 +130,21 @@ fn explode_line(line: &String, once: bool) -> String {
                         result.push('0');
                         //println!("result after left search: {}", result);
                         // search right
-                        i = end_pos+1; // digit + ]
-                        // println!(
-                        //     "rest before right: {}",
-                        //     chars[i..].iter().collect::<String>().as_str()
-                        // );
+                        i = end_pos + 1; // digit + ]
+                                         // println!(
+                                         //     "rest before right: {}",
+                                         //     chars[i..].iter().collect::<String>().as_str()
+                                         // );
                         for j in i..chars.len() {
-                            i += 1;                            
+                            i += 1;
                             if chars[j].to_digit(10).is_some() {
-                                let mut end_pos = j+1;
+                                let mut end_pos = j + 1;
                                 while chars[end_pos].to_digit(10).is_some() {
                                     end_pos += 1;
                                     i += 1;
                                 }
-                                let number_string = format!("{}", chars[j..end_pos].iter().collect::<String>());
+                                let number_string =
+                                    format!("{}", chars[j..end_pos].iter().collect::<String>());
                                 // println!("Number String: {}", number_string);
 
                                 result.push_str(&format!(
@@ -153,11 +161,11 @@ fn explode_line(line: &String, once: bool) -> String {
                         // println!(
                         //     "left after right search: {}",
                         //     chars[i..].iter().collect::<String>().as_str()
-                        // );                                
+                        // );
                     } else {
                         result.push(chars[i]);
                     }
-                },
+                }
                 _ => result.push(chars[i]),
             }
             if exploded {
@@ -179,43 +187,43 @@ fn explode_line(line: &String, once: bool) -> String {
 fn split_line(line: &String, once: bool) -> String {
     let mut last_result = line.clone();
     //loop {
-        let mut result = "".to_owned();
-        let chars = last_result.chars().collect::<Vec<char>>();
-        let mut split = false;
-        for mut i in 0..chars.len() {
-            match chars[i] {
-                '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
-                    let mut number_string = format!("{}", chars[i]);
-                    if chars[i + 1].to_digit(10).is_some() {
-                        i += 1;
-                        number_string.push(chars[i]);
-                    }
-                    let number = number_string.parse::<u64>().unwrap();
-                    if number >= 10 {
-                        let left = number / 2;
-                        let right = number / 2 + (number % (left * 2));
-                        result.push_str(&format!("[{},{}]", left, right));
-                        split = true;
-                    } else {
-                        result.push(chars[i]);
-                    }
-                },
-                _ => result.push(chars[i]),
+    let mut result = "".to_owned();
+    let chars = last_result.chars().collect::<Vec<char>>();
+    let mut split = false;
+    for mut i in 0..chars.len() {
+        match chars[i] {
+            '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
+                let mut number_string = format!("{}", chars[i]);
+                if chars[i + 1].to_digit(10).is_some() {
+                    i += 1;
+                    number_string.push(chars[i]);
+                }
+                let number = number_string.parse::<u64>().unwrap();
+                if number >= 10 {
+                    let left = number / 2;
+                    let right = number / 2 + (number % (left * 2));
+                    result.push_str(&format!("[{},{}]", left, right));
+                    split = true;
+                } else {
+                    result.push(chars[i]);
+                }
+            }
+            _ => result.push(chars[i]),
+        }
+        if split {
+            if i < chars.len() {
+                result.push_str(chars[i + 1..].iter().collect::<String>().as_str());
             }
             if split {
-                if i < chars.len() {
-                    result.push_str(chars[i + 1..].iter().collect::<String>().as_str());
-                }
-                if split {
-                    println!("Split:    {}", result);
-                }
-                break;
+                println!("Split:    {}", result);
             }
+            break;
         }
-        if !split || once {
-            return result;
-        }
-        return result.clone();
+    }
+    if !split || once {
+        return result;
+    }
+    return result.clone();
     //}
 }
 
@@ -226,7 +234,7 @@ fn reduce_line(line: String) -> String {
     loop {
         let explode = explode_line(&last_result, false);
         let split = split_line(&explode, false);
-        println!{"result:   {}", split};
+        println! {"result:   {}", split};
         if split == last_result {
             return last_result;
         }
@@ -236,7 +244,7 @@ fn reduce_line(line: String) -> String {
 
 fn calc_magnitude(line: String) -> u64 {
     let mut result = line.clone();
-    
+
     loop {
         let mut found = false;
         let chars = result.chars().collect::<Vec<char>>();
@@ -245,37 +253,37 @@ fn calc_magnitude(line: String) -> u64 {
         while i < chars.len() {
             match chars[i] {
                 ',' => {
-                    if chars[i-1].to_digit(10).is_some() && chars[i+1].to_digit(10).is_some() {
-                        let mut start_pos = i-1;
+                    if chars[i - 1].to_digit(10).is_some() && chars[i + 1].to_digit(10).is_some() {
+                        let mut start_pos = i - 1;
                         while chars[start_pos].to_digit(10).is_some() {
                             start_pos -= 1;
                         }
-                        let mut end_pos = i+1;
+                        let mut end_pos = i + 1;
                         while chars[end_pos].to_digit(10).is_some() {
                             end_pos += 1;
                         }
-                        let mut number_string = format!("{}", chars[start_pos+1]);
-                        for j in start_pos+2..i {
+                        let mut number_string = format!("{}", chars[start_pos + 1]);
+                        for j in start_pos + 2..i {
                             number_string.push(chars[j]);
                         }
                         //println!("Number String: {}", number_string);
                         let left_number = number_string.parse::<u64>().unwrap();
                         // right number
-                        number_string = format!("{}", chars[i+1]);
-                        for j in i+2..end_pos {
+                        number_string = format!("{}", chars[i + 1]);
+                        for j in i + 2..end_pos {
                             number_string.push(chars[j]);
                         }
                         //println!("Number String: {}", number_string);
                         let right_number = number_string.parse::<u64>().unwrap();
                         result = chars[0..start_pos].iter().collect::<String>();
                         result.push_str(format!("{}", left_number * 3 + right_number * 2).as_str());
-                        i = end_pos+1;
+                        i = end_pos + 1;
                         found = true;
                     } else {
                         result.push(chars[i]);
                         i += 1;
                     }
-                },
+                }
                 _ => {
                     result.push(chars[i]);
                     i += 1;
@@ -323,7 +331,10 @@ mod tests {
         //     "[[[[0,7],4],[[7,8],[6,0]]],[8,1]]".to_owned()
         // );
         assert_eq!(
-            reduce_line("[[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]],[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]]".to_owned()),
+            reduce_line(
+                "[[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]],[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]]"
+                    .to_owned()
+            ),
             "[[[[4,0],[5,4]],[[7,7],[6,0]]],[[8,[7,7]],[[7,9],[5,0]]]]".to_owned()
         );
     }
@@ -341,9 +352,6 @@ mod tests {
 
     #[test]
     fn test_calc_magnitude() {
-        assert_eq!(
-            calc_magnitude("[[1,2],[[3,4],5]]".to_owned()),
-            10
-        );
+        assert_eq!(calc_magnitude("[[1,2],[[3,4],5]]".to_owned()), 10);
     }
 }
