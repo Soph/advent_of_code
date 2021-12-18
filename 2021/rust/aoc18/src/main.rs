@@ -20,6 +20,7 @@ fn main() {
     }
 
     println!("{}", result);
+    println!("{}", calc_magnitude(result));
 }
 
 fn read_and_parse(path: &str) -> Vec<String> {
@@ -222,7 +223,57 @@ fn reduce_line(line: String) -> String {
 }
 
 fn calc_magnitude(line: String) -> u64 {
+    let mut result = line.clone();
     
+    loop {
+        let mut found = false;
+        let chars = result.chars().collect::<Vec<char>>();
+        result = "".to_owned();
+        let mut i = 0;
+        while i < chars.len() {
+            match chars[i] {
+                ',' => {
+                    if chars[i-1].to_digit(10).is_some() && chars[i+1].to_digit(10).is_some() {
+                        let mut start_pos = i-1;
+                        while chars[start_pos].to_digit(10).is_some() {
+                            start_pos -= 1;
+                        }
+                        let mut end_pos = i+1;
+                        while chars[end_pos].to_digit(10).is_some() {
+                            end_pos += 1;
+                        }
+                        let mut number_string = format!("{}", chars[start_pos+1]);
+                        for j in start_pos+2..i {
+                            number_string.push(chars[j]);
+                        }
+                        //println!("Number String: {}", number_string);
+                        let left_number = number_string.parse::<u64>().unwrap();
+                        // right number
+                        number_string = format!("{}", chars[i+1]);
+                        for j in i+2..end_pos {
+                            number_string.push(chars[j]);
+                        }
+                        //println!("Number String: {}", number_string);
+                        let right_number = number_string.parse::<u64>().unwrap();
+                        result = chars[0..start_pos].iter().collect::<String>();
+                        result.push_str(format!("{}", left_number * 3 + right_number * 2).as_str());
+                        i = end_pos+1;
+                        found = true;
+                    } else {
+                        result.push(chars[i]);
+                        i += 1;
+                    }
+                },
+                _ => {
+                    result.push(chars[i]);
+                    i += 1;
+                }
+            }
+        }
+        if !found {
+            return result.parse::<u64>().unwrap();
+        }
+    }
 }
 
 #[cfg(test)]
@@ -273,6 +324,14 @@ mod tests {
                 "[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]".to_owned()
             )),
             "[[[[4,0],[5,4]],[[7,7],[6,0]]],[[8,[7,7]],[[7,9],[5,0]]]]".to_owned()
+        );
+    }
+
+    #[test]
+    fn test_calc_magnitude() {
+        assert_eq!(
+            calc_magnitude("[[1,2],[[3,4],5]]".to_owned()),
+            10
         );
     }
 }
