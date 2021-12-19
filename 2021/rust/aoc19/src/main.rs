@@ -88,19 +88,7 @@ impl Scanner {
                     scanners.push(scanner);
                 }
             }
-            let scanner = Scanner {
-                position: Point { x: 0, y: 0, z: 0 },
-                beacons: self
-                    .beacons
-                    .iter()
-                    .map(|b| b.rotate_y(std::f64::consts::PI / 2.0 * i as f64))
-                    .collect(),
-            };
-            if !scanners.contains(&scanner) {
-                scanners.push(scanner);
-            }
         }
-
         for i in 0..=3 {
             for scanner in scanners.clone() {
                 let scanner = Scanner {
@@ -114,17 +102,6 @@ impl Scanner {
                 if !scanners.contains(&scanner) {
                     scanners.push(scanner);
                 }
-            }
-            let scanner = Scanner {
-                position: Point { x: 0, y: 0, z: 0 },
-                beacons: self
-                    .beacons
-                    .iter()
-                    .map(|b| b.rotate_z(std::f64::consts::PI / 2.0 * i as f64))
-                    .collect(),
-            };
-            if !scanners.contains(&scanner) {
-                scanners.push(scanner);
             }
         }
 
