@@ -188,12 +188,15 @@ impl Scanner {
     fn align(&self, other: &Scanner) -> Option<Scanner> {
         for other_beacon in other.clone().beacons {
             for rotation in self.rotations() {
-                for beacon in rotation.clone().beacons {
-                    let offset = other_beacon.offset(&beacon);
+                for i in 0..rotation.beacons.len() {
+                    let offset = other_beacon.offset(&rotation.beacons[i]);
                     let shifted = rotation.shift(&offset);
                     let matching = other.matching_beacons(&shifted);
                     if matching.len() >= 12 {
                         return Some(shifted);
+                    }
+                    if rotation.beacons.len() - i + matching.len() < 12 {
+                        break;
                     }
                 }
             }
