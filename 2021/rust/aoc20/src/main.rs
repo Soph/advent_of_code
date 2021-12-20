@@ -39,27 +39,8 @@ fn read_and_parse(path: &str) -> (Vec<char>, Vec<Vec<char>>) {
 }
 
 fn process2(image_data: &Vec<Vec<char>>, pixel_data: &Vec<char>, times: usize) -> Vec<Vec<char>> {
-    let mut defaults = vec!['0'; times + 1];
-    if pixel_data[0] == '#' {
-        if pixel_data[511] == '#' {
-            for i in 1..=times {
-                defaults[i] = '1';
-            }
-        } else {
-            for i in 0..=times {
-                if i % 2 == 0 {
-                    defaults[i] = '0';
-                } else {
-                    defaults[i] = '1';
-                }
-            }
-        }
-    }
-
-    println!("{:?}", defaults);
-
     let mut current_image_data = image_data.clone();
-    for n in 0..times {
+    for _ in 0..times {
         let mut result = extend(&current_image_data);
         println!("after extend");
         print(&result);
@@ -76,7 +57,7 @@ fn process2(image_data: &Vec<Vec<char>>, pixel_data: &Vec<char>, times: usize) -
                             || j < 0
                             || j >= current_image_data[0].len() as isize
                         {
-                            number_data.push(defaults[n]);
+                            number_data.push(if current_image_data[0][0] == '#' { '1' } else { '0' });
                         } else if current_image_data[i as usize][j as usize] == '#' {
                             number_data.push('1');
                         } else {
