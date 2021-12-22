@@ -70,47 +70,42 @@ fn run2(start_a: u128, start_b: u128) {
     };
     plays.insert(start, 1);
 
-    //loop {
+    loop {
         let mut new_plays: HashMap<Play, u128> = HashMap::new();
         for n in 0..=1 {
-            println!("{}", n);
-            for (play, play_count) in plays.clone() {
-                if play.score_a >= 21 || play.score_b >= 21 {
-                    if play.score_a >= 21 {
-                        wins.0 += play_count;
-                    } else if play.score_b >= 21 {
-                        wins.1 += play_count;
-                    }
-                } else {
-                    for i in 1..=3 {
-                        for j in 1..=3 {
-                            for k in 1..=3 {
-                                let mut new_play = play.clone();
-                                if n == 0 {
-                                    new_play.pos_a += i+j+k;
-                                    new_play.pos_a = (new_play.pos_a - 1) % 10 + 1;
-                                    new_play.score_a += new_play.pos_a;
-                                } else {
-                                    new_play.pos_b += i+j+k;
-                                    new_play.pos_b = (new_play.pos_b - 1) % 10 + 1;
-                                    new_play.score_b += new_play.pos_b;
-                                }
-                                println!("{} + {} {} {} -> {}", play.string(), i, j, k, new_play.string());
-                                *new_plays.entry(new_play.clone()).or_insert(0) += play_count;
+            for (play, play_count) in plays {
+                for i in 1..=3 {
+                    for j in 1..=3 {
+                        for k in 1..=3 {
+                            let mut new_play = play.clone();
+                            if n == 0 {
+                                new_play.pos_a += i+j+k;
+                                new_play.pos_a = (new_play.pos_a - 1) % 10 + 1;
+                                new_play.score_a += new_play.pos_a;
+                            } else {
+                                new_play.pos_b += i+j+k;
+                                new_play.pos_b = (new_play.pos_b - 1) % 10 + 1;
+                                new_play.score_b += new_play.pos_b;
                             }
+                            if new_play.score_a >= 21 {
+                                wins.0 += play_count;
+                            } else if new_play.score_b >= 21 {
+                                wins.1 += play_count;
+                            } else {
+                                *new_plays.entry(new_play.clone()).or_insert(0) += play_count;
+                            }          
                         }
                     }
-                    
                 }
             }
             plays = new_plays.clone();
         }
-        println!("{:?}", plays);
+        //println!("{:?}", plays);
         if plays.len() == 0 {
             println!("Player A: {}, Player B: {}", wins.0, wins.1);
             return;
         } else {
             println!("Player A: {}, Player B: {}, Plays: {}", wins.0, wins.1, plays.len());
         }
-    //}
+    }
 }
