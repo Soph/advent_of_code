@@ -71,8 +71,8 @@ fn run2(start_a: u128, start_b: u128) {
     plays.insert(start, 1);
 
     loop {
-        let mut new_plays: HashMap<Play, u128> = HashMap::new();
         for n in 0..=1 {
+            let mut new_plays: HashMap<Play, u128> = HashMap::new();
             for (play, play_count) in plays {
                 for i in 1..=3 {
                     for j in 1..=3 {
