@@ -74,7 +74,13 @@ impl Cube {
         self.intersection(cube) == *cube
     }
 
+    // "on x=-20..33,y=-21..23,z=-26..28"
+    // "off x=18..30,y=-20..-8,z=-3..13"
     fn is_overlap(&self, cube: &Cube) -> bool {
+        self.is_inside(cube) || cube.is_inside(self)
+    }
+
+    fn is_inside(&self, cube: &Cube) -> bool {
         if self.x1 >= cube.x1 && self.x1 <= cube.x2 {
             if self.y1 >= cube.y1 && self.y1 <= cube.y2 {
                 if self.z1 >= cube.z1 && self.z1 <= cube.z2 {
@@ -169,11 +175,11 @@ fn main() {
                         println!("{} can be removedd since it's contained in {}", overlapping[0].pretty_print(), cubes[i].pretty_print());
                         relevant_cubes.retain(|x| x.clone() != overlapping[0]);
                     }
+                    relevant_cubes.push(cubes[i].clone());
                 } else if overlapping.len() > 1{
                     relevant_cubes.push(cubes[i].clone());
                 }
         
-                relevant_cubes.push(cubes[i].clone());
                 continue;
             } else {
                 let mut overlapping: Vec<Cube> = vec![];
@@ -189,16 +195,20 @@ fn main() {
                     let intersection = overlapping[0].intersection(&cubes[i]);
                     if intersection != cubes[i] {
                         reduce = true;
-                        println!("{} can be reduced to {}", cubes[i].pretty_print(), intersection.pretty_print());
+                        println!("{} can be reduced to {}, because {}", cubes[i].pretty_print(), intersection.pretty_print(), overlapping[0].pretty_print());
                         relevant_cubes.push(intersection); 
+                    } else {
+                        relevant_cubes.push(cubes[i].clone());
                     }
                 } else if overlapping.len() > 1{
                     relevant_cubes.push(cubes[i].clone());
+                } else {
+                    println!("{:?} has no overlap, removing", cubes[i]);
                 }
             }
         }
         println!("Relevant cubes count: {}", relevant_cubes.len());
-    
+
         let mut removable_disable_cubes: Vec<Cube> = vec![];
     
         for i in 0..cubes.len() {
@@ -206,7 +216,7 @@ fn main() {
                 continue;
             }
             for j in i+1..cubes.len() {
-                if cubes[j].contains(&cubes[i]) && ((cubes[i].on && cubes[j].on) || !cubes[i].on) {
+                if cubes[j].contains(&cubes[i]) && ((cubes[i].on && cubes[j].on) || !cubes[j].on) {
                     println!("{} contains {}", cubes[j].pretty_print(), cubes[i].pretty_print());
                     removable_disable_cubes.push(cubes[i].clone());
                 }
@@ -221,22 +231,15 @@ fn main() {
         }
     }
 
-    // let mut sum = cubes[0].size();
-    // let mut enabled: Vec<Cube> = vec![cubes[0].clone()];
-    // for i in 1..cubes.len() {
-    //     if cubes[i].on {
-    //         enabled.push(cubes[i].clone());
-    //     } else {
-    //         let mut new_enabled: Vec<Cube> = vec![];
-    //         for cube in &enabled {
-    //             if !cubes[i].is_overlap(cube) {
-    //                 new_enabled.push(cube.clone());
-    //             }
-    //         }
-    //         enabled = new_enabled;
-    //     }
-    // }
-    // let mut enabled: Vec<Cube> = Vec::new();
+    for cube in &cubes {
+        println!("{:?}", cube);
+    }
+
+    let mut sum = 0;
+    for cube in cubes {
+        sum += cube.size();
+    }
+    println!("Sum: {}", sum)
 
 
     // let mut intersections: HashMap<Cube, Vec<Cube>> = HashMap::new();
@@ -333,7 +336,11 @@ mod tests {
             z2: 15,
             on: true,
         };
-        assert_eq!(cube1.is_overlap(&cube2), true);        
+        assert_eq!(cube1.is_overlap(&cube2), true);
+        
+        assert_eq!("off x=-48..-32,y=26..41,z=-47..-37".parse::<Cube>().unwrap().is_overlap(&"on x=-39..5,y=-6..47,z=-3..44".parse::<Cube>().unwrap()), false);
+        assert_eq!("off x=18..30,y=-20..-8,z=-3..13".parse::<Cube>().unwrap().is_overlap(&"on x=-20..33,y=-21..23,z=-26..28".parse::<Cube>().unwrap()), true);
+        assert_eq!("on x=-20..33,y=-21..23,z=-26..28".parse::<Cube>().unwrap().is_overlap(&"off x=18..30,y=-20..-8,z=-3..13".parse::<Cube>().unwrap()), true);
     }
 
     #[test]
