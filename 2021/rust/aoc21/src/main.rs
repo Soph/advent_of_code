@@ -40,8 +40,6 @@ fn run1(player1: u128, player2: u128) -> u128 {
         if score2 >= 1000 {
             return score1 * throws;
         }
-
-        println!("{}: {}, {}: {}", pos1, score1, pos2, score2);
     }
     0
 }
@@ -61,8 +59,7 @@ impl Play {
 }
 
 fn run2(start_a: u128, start_b: u128) {
-    let mut plays_data: HashMap<String, u128> = HashMap::new();
-    let mut plays: HashSet<Play> = HashSet::new();
+    let mut plays: HashMap<Play, u128> = HashMap::new();
     let mut wins: (u128, u128) = (0,0);
 
     let start = Play {
@@ -71,16 +68,18 @@ fn run2(start_a: u128, start_b: u128) {
         score_a: 0,
         score_b: 0,
     };
-    plays.insert(start.clone());
+    plays.insert(start, 1);
 
-    loop {
+    //loop {
+        let mut new_plays: HashMap<Play, u128> = HashMap::new();
         for n in 0..=1 {
-            for play in plays.clone() {
+            println!("{}", n);
+            for (play, play_count) in plays.clone() {
                 if play.score_a >= 21 || play.score_b >= 21 {
                     if play.score_a >= 21 {
-                        wins.0 += plays_data.get(&play.string()).unwrap();
+                        wins.0 += play_count;
                     } else if play.score_b >= 21 {
-                        wins.1 += plays_data.get(&play.string()).unwrap();
+                        wins.1 += play_count;
                     }
                 } else {
                     for i in 1..=3 {
@@ -96,50 +95,22 @@ fn run2(start_a: u128, start_b: u128) {
                                     new_play.pos_b = (new_play.pos_b - 1) % 10 + 1;
                                     new_play.score_b += new_play.pos_b;
                                 }
-                                let count = if plays_data.get(&play.string()).is_some() { *plays_data.get(&play.string()).unwrap() } else { 1 };
-                                *plays_data.entry(new_play.string()).or_insert(0) += count;
-                                plays.insert(new_play.clone());
+                                println!("{} + {} {} {} -> {}", play.string(), i, j, k, new_play.string());
+                                *new_plays.entry(new_play.clone()).or_insert(0) += play_count;
                             }
                         }
                     }
                     
                 }
-                plays.remove(&play);
-                plays_data.remove(&play.string());
             }
+            plays = new_plays.clone();
         }
+        println!("{:?}", plays);
         if plays.len() == 0 {
             println!("Player A: {}, Player B: {}", wins.0, wins.1);
             return;
         } else {
             println!("Player A: {}, Player B: {}, Plays: {}", wins.0, wins.1, plays.len());
         }
-    }
+    //}
 }
-
-//     let mut local_play = play.clone();
-//     while local_play.score1 < 21 && local_play.score2 < 21 {
-//         for _ in 0..3 {
-//             local_play.throws += 1;
-//             local_play.dice = local_play.dice % 100 + 1;
-//             local_play.pos1 += local_play.dice;
-//         }
-//         local_play.pos1 = (local_play.pos1 - 1) % 10 + 1;
-//         local_play.score1 += local_play.pos1;
-//         if local_play.score1 >= 1000 {
-//             return local_play.score2 * local_play.throws;
-//         }
-
-//         for _ in 0..3 {
-//             local_play.throws += 1;
-//             local_play.dice = local_play.dice % 100 + 1;
-//             local_play.pos2 += local_play.dice;
-//         }
-//         local_play.pos2 = (local_play.pos2 - 1) % 10 + 1;
-//         local_play.score2 += local_play.pos2;
-//         if local_play.score2 >= 1000 {
-//             return local_play.score1 * local_play.throws;
-//         }
-//     }
-//     0
-// }
