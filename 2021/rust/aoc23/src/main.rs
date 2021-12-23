@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 
@@ -79,61 +78,61 @@ impl Playfield {
     fn possible_moves(&self) -> Vec<Move> {
         let mut valid_moves = vec![];
         for amphipod in &self.amphipods {
-            // println!("Checking: {}, {:?}", amphipod.name, amphipod.position);
+            //println!("Checking: {}, {:?}", amphipod.name, amphipod.position);
             let position = amphipod.position.clone();
             let name = amphipod.name.clone();
             let target_x = Playfield::destination_x(name);
             // 0123456789012
             // #...........#
             // ###A#B#C#D###
-            // ###A#B#C#D###            
-            if position.y == 2 && self.grid[1][position.x] != '.' // someone above
-                || position.y == 0 && position.x == 1 && self.grid[0][2] != '.' // someone right
-                || position.y == 0 && position.x == 11 && self.grid[0][10] != '.' // someone left
-                || (
-                    position.y == 2 && self.grid[0][position.x+1] != '.' // someone right to exit
-                    && position.y == 2 && self.grid[0][position.x-1] != '.' // someone left to exit
-                 ) // can't leave room
-                || position.y == 2 && position.x == target_x // we are home already, don't move
-                || position.y == 1 && position.x == target_x && self.grid[2][position.x] == name // we are home already, and below is the right amphipod too
-            {
-                // can't move, let's STAAAYYYYYY!
-                // println!("Can't move, let's STAAAYYYYYY! - {}", name);
+            // ###A#B#C#D###
+
+            // in the corners, someone blocking
+            if (position.y == 0 && position.x == 1 && self.grid[0][2] != '.') || (position.y == 0 && position.x == 11 && self.grid[0][10] != '.') {
                 continue;
             }
-    
-            // let's see if we can move to our target room
-            if self.grid[2][target_x] == '.' && self.grid[1][target_x] == '.' { // move bottom into room possible
-                let target = Position::new(target_x, 2);
-                let steps = self.check_path(&position, &target);
-                if steps > 0 {
-                    valid_moves.push(Move {
-                        from: position.clone(),
-                        to: target,
-                        energy: steps * amphipod.move_energy,
-                    });
-                }      
-            } else if self.grid[1][target_x] == '.' && self.grid[2][target_x] == name { // move top into room possible
-                let target = Position::new(target_x, 1);
-                //println!("Checking to move from {:?} to {:?}", position, target);
-                let steps = self.check_path(&position, &target);
-                if steps > 0 {
-                    valid_moves.push(Move {
-                        from: position.clone(),
-                        to: target,
-                        energy: steps * amphipod.move_energy,
-                    });
-                }  
-            } else {
-                for parking_position in self.free_parking_positions() {
-                    let steps = self.check_path(&position, &parking_position);
-                    if steps > 0 {
-                        valid_moves.push(Move {
-                            from: position.clone(),
-                            to: parking_position.clone(),
-                            energy: steps * amphipod.move_energy,
-                        });
+
+            // we are in a room, but the left/right in 0 are blocked
+            if position.y > 0 && self.grid[0][position.x+1] != '.'  && self.grid[0][position.x-1] != '.' {
+                continue;
+            }
+
+            // everyone below us, belongs here.
+            if position.x == target_x && self.grid[position.y..self.grid.len()].iter().map(|r| r[position.x]).filter(|c| c != &name).collect::<Vec<char>>().len() == 0 {
+                continue;
+            }
+
+            // is something above us?
+            if position.y > 2 && self.grid[0..position.y].iter().map(|r| r[position.x]).filter(|c| c != &'.' ).collect::<Vec<char>>().len() != 0 {
+                continue;
+            }
+
+            // is room for letter free or only occupied by right letter?
+            if self.grid[1..].iter().map(|r| r[target_x]).filter(|c| c != &'.' && c != &name ).collect::<Vec<char>>().len() == 0 {
+                for i in (1..self.grid.len()).rev() {
+                    if self.grid[i][target_x] == '.' {
+                        let target = Position::new(target_x, i);
+                        let steps = self.check_path(&position, &target);
+                        //println!("Can move to {:?} in {} steps!", target, steps);
+                        if steps > 0 {
+                            valid_moves.push(Move {
+                                from: position.clone(),
+                                to: Position::new(target_x, i),
+                                energy: amphipod.move_energy * steps as u64,
+                            });
+                            break;
+                        }
                     }
+                }
+            }
+            for parking_position in self.free_parking_positions() {
+                let steps = self.check_path(&position, &parking_position);
+                if steps > 0 {
+                    valid_moves.push(Move {
+                        from: position.clone(),
+                        to: parking_position.clone(),
+                        energy: steps * amphipod.move_energy,
+                    });
                 }
             }
         }
@@ -162,21 +161,17 @@ impl Playfield {
     fn check_path(&self, start: &Position, end: &Position) -> u64 {
         let mut updated_position = start.clone();
         let mut steps = 0;
+        //println!("Checking Path from {:?} to {:?}", start, end);
+        //self.print_playfield();
         loop {
             if updated_position.x != end.x { // not in target room
-                if updated_position.y == 2 {
-                    if self.grid[1][updated_position.x] == '.' {
-                        steps += 1;
+                if updated_position.y > 0 {
+                    //println!("Checking {:?}: {}", updated_position, self.grid[updated_position.y-1][updated_position.x]);
+                    if self.grid[updated_position.y-1][updated_position.x] == '.' {
                         updated_position.y -= 1;
-                    } else {
-                        return 0; // can't reach
-                    }
-                } else if updated_position.y == 1 {
-                    if self.grid[0][updated_position.x] == '.' {
                         steps += 1;
-                        updated_position.y -= 1;
                     } else {
-                        return 0; // can't reach
+                        return 0;
                     }
                 } else if updated_position.y == 0 {
                     if start.x > end.x { // left
@@ -200,21 +195,15 @@ impl Playfield {
                     }
                 }                 
             } else { // target x reached
-                if updated_position.y == 0 {
-                    if self.grid[1][updated_position.x] == '.' {
-                        steps += 1;
-                        updated_position.y += 1;
-                    } else {
-                        return 0; // can't reach
-                    }
-                } else if updated_position.y == 1 {
-                    if self.grid[2][updated_position.x] == '.' { // can we move into the bottom of the room?
-                        steps += 1;
-                        updated_position.y += 1;
-                    }
+                if updated_position.y < self.grid.len() && self.grid[updated_position.y+1][updated_position.x] == '.' {
+                    updated_position.y = updated_position.y+1;
+                    steps += 1;
+                } else {
+                    return 0;
                 }
             }
             if updated_position == end.clone() {
+                //println!("Moved: {}", steps);
                 return steps;
             }
         }
@@ -243,10 +232,12 @@ impl Playfield {
     // 1 ###A#B#C#D###
     // 2 ###A#B#C#D###    
     fn is_done(&self) -> bool {
-        self.grid[2][3] == 'A' && self.grid[1][3] == 'A' 
-            && self.grid[2][5] == 'B' && self.grid[1][5] == 'B'
-            && self.grid[2][7] == 'C' && self.grid[1][7] == 'C'
-            && self.grid[2][9] == 'D' && self.grid[1][9] == 'D'
+        for y in 1..self.grid.len() {
+            if !(self.grid[y][3] == 'A' && self.grid[y][5] == 'B' && self.grid[y][7] == 'C' && self.grid[y][9] == 'D') {
+                return false;
+            }
+        }
+        return true;
     }
 
     fn playfield_string(&self) -> String{
@@ -298,15 +289,19 @@ fn main() {
         //    0    1    2    3    4    5    6    7    8    9    0    1    2
         vec!['#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'],
         vec!['#', '#', '#', 'B', '#', 'C', '#', 'B', '#', 'D', '#', '#', '#'],
+        // vec!['#', '#', '#', 'D', '#', 'C', '#', 'B', '#', 'A', '#', '#', '#'],
+        // vec!['#', '#', '#', 'D', '#', 'B', '#', 'A', '#', 'C', '#', '#', '#'],
         vec!['#', '#', '#', 'A', '#', 'D', '#', 'C', '#', 'A', '#', '#', '#'],
     ];
 
-    let playfield_grid: Vec<Vec<char>> = vec![
-        //    0    1    2    3    4    5    6    7    8    9    0    1    2
-        vec!['#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'],
-        vec!['#', '#', '#', 'D', '#', 'A', '#', 'A', '#', 'D', '#', '#', '#'],
-        vec!['#', '#', '#', 'C', '#', 'C', '#', 'B', '#', 'B', '#', '#', '#'],
-    ];
+    // let playfield_grid: Vec<Vec<char>> = vec![
+    //     //    0    1    2    3    4    5    6    7    8    9    0    1    2
+    //     vec!['#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'],
+    //     vec!['#', '#', '#', 'D', '#', 'A', '#', 'A', '#', 'D', '#', '#', '#'],
+    //     vec!['#', '#', '#', 'D', '#', 'C', '#', 'B', '#', 'A', '#', '#', '#'],
+    //     vec!['#', '#', '#', 'D', '#', 'B', '#', 'A', '#', 'C', '#', '#', '#'],
+    //     vec!['#', '#', '#', 'C', '#', 'C', '#', 'B', '#', 'B', '#', '#', '#'],
+    // ];
 
     let playfield = Playfield::new(playfield_grid);
 
@@ -367,6 +362,28 @@ mod tests {
         };
 
         assert_eq!(playfield.is_done(), true);
+
+        let playfield_grid: Vec<Vec<char>> = vec![
+            //    0    1    2    3    4    5    6    7    8    9    0    1    2
+            vec!['#', '.', '.', '.', '.', '.', 'C', '.', '.', '.', '.', '.', '#'],
+            vec!['#', '#', '#', 'A', '#', 'B', '#', '.', '#', 'D', '#', '#', '#'],
+            vec!['#', '#', '#', 'A', '#', 'B', '#', 'C', '#', 'D', '#', '#', '#'],
+            vec!['#', '#', '#', 'A', '#', 'B', '#', 'C', '#', 'D', '#', '#', '#'],
+            vec!['#', '#', '#', 'A', '#', 'B', '#', 'C', '#', 'D', '#', '#', '#'],
+        ];
+        let playfield = Playfield::new(playfield_grid);
+        assert_eq!(playfield.is_done(), false);
+
+        let playfield_grid: Vec<Vec<char>> = vec![
+            //    0    1    2    3    4    5    6    7    8    9    0    1    2
+            vec!['#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'],
+            vec!['#', '#', '#', 'A', '#', 'B', '#', 'C', '#', 'D', '#', '#', '#'],
+            vec!['#', '#', '#', 'A', '#', 'B', '#', 'C', '#', 'D', '#', '#', '#'],
+            vec!['#', '#', '#', 'A', '#', 'B', '#', 'C', '#', 'D', '#', '#', '#'],
+            vec!['#', '#', '#', 'A', '#', 'B', '#', 'C', '#', 'D', '#', '#', '#'],
+        ];
+        let playfield = Playfield::new(playfield_grid);
+        assert_eq!(playfield.is_done(), true);
     }
 
     #[test]
@@ -389,8 +406,7 @@ mod tests {
         ];
         let playfield = Playfield::new(playfield_grid);
 
-        assert_eq!(playfield.possible_moves().len(), 1);
-        
+        assert_eq!(playfield.possible_moves().len(), 7);
     }
 
     #[test]
@@ -402,9 +418,10 @@ mod tests {
             vec!['#', '#', '#', 'A', '#', 'B', '#', 'C', '#', 'D', '#', '#', '#'],
         ];
         let playfield = Playfield::new(playfield_grid);
+        println!("{:?}", playfield.possible_moves());
         let new_playfields = playfield.generate_new_playfields();
 
-        assert_eq!(new_playfields.len(), 1);
+        assert_eq!(new_playfields.len(), 7);
         assert_eq!(new_playfields[0].is_done(), true);
         assert_eq!(new_playfields[0].total_energy, 200);
 
@@ -424,7 +441,7 @@ mod tests {
         let result = Playfield::new(result_grid);
         let new_playfields = playfield.generate_new_playfields();
 
-        assert_eq!(new_playfields.len(), 2);
+        assert_eq!(new_playfields.len(), 7);
         assert_eq!(new_playfields.iter().filter(|p| p.is_done()).count(), 0);
         assert_eq!(new_playfields.iter().filter(|p| p.grid == result.grid).count(), 1);
 
@@ -443,8 +460,10 @@ mod tests {
         ];
         let result = Playfield::new(result_grid);
         let new_playfields = playfield.generate_new_playfields();
-
-        assert_eq!(new_playfields.len(), 6);
+        for p in &new_playfields {
+            println!("{}", p.playfield_string());
+        }
+        assert_eq!(new_playfields.len(), 10);
         assert_eq!(new_playfields.iter().filter(|p| p.is_done()).count(), 0);
         assert_eq!(new_playfields.iter().filter(|p| p.grid == result.grid).count(), 1);
         
@@ -468,5 +487,47 @@ mod tests {
         let new_playfields = playfield.generate_new_playfields();
         
         assert_eq!(new_playfields.iter().filter(|p| p.grid == result.grid).next().unwrap().total_energy, 400);
+    }
+
+    #[test]
+    fn test_part2() {
+        let playfield_grid: Vec<Vec<char>> = vec![
+            //    0    1    2    3    4    5    6    7    8    9    0    1    2
+            vec!['#', 'A', '.', '.', '.', '.', '.', '.', 'B', '.', 'B', 'D', '#'],
+            vec!['#', '#', '#', 'B', '#', 'C', '#', '.', '#', '.', '#', '#', '#'],
+            vec!['#', '#', '#', 'D', '#', 'C', '#', '.', '#', '.', '#', '#', '#'],
+            vec!['#', '#', '#', 'D', '#', 'B', '#', 'A', '#', 'C', '#', '#', '#'],
+            vec!['#', '#', '#', 'A', '#', 'D', '#', 'C', '#', 'A', '#', '#', '#'],
+        ];
+        let playfield = Playfield::new(playfield_grid);
+
+        assert_eq!(playfield.amphipods.len(), 16);
+        let new_playfields = playfield.generate_new_playfields();
+
+        for playfield in &new_playfields {
+            playfield.print_playfield();
+        }
+
+        assert_eq!(new_playfields.len(), 15);
+
+        let playfield_grid: Vec<Vec<char>> = vec![
+            //    0    1    2    3    4    5    6    7    8    9    0    1    2
+            vec!['#', 'C', 'C', '.', '.', '.', '.', '.', '.', '.', 'C', 'C', '#'],
+            vec!['#', '#', '#', 'A', '#', 'B', '#', '.', '#', 'D', '#', '#', '#'],
+            vec!['#', '#', '#', 'A', '#', 'B', '#', '.', '#', 'D', '#', '#', '#'],
+            vec!['#', '#', '#', 'A', '#', 'B', '#', '.', '#', 'D', '#', '#', '#'],
+            vec!['#', '#', '#', 'A', '#', 'B', '#', '.', '#', 'D', '#', '#', '#'],
+        ];
+        let playfield = Playfield::new(playfield_grid);
+
+        assert_eq!(playfield.amphipods.len(), 16);
+        let new_playfields = playfield.generate_new_playfields();
+
+        for playfield in &new_playfields {
+            playfield.print_playfield();
+        }
+
+        assert_eq!(new_playfields.len(), 8);
+        assert_eq!(new_playfields.iter().map(|p| p.total_energy).max().unwrap(), 900);
     }
 }
