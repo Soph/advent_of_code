@@ -240,8 +240,10 @@ impl Playfield {
                 new_playfield.grid[move_.from.y][move_.from.x] = '.';
                 new_playfield.grid[move_.to.y][move_.to.x] = letter;
                 new_playfield.total_energy += move_.energy;
-            } 
-            new_amiphods.push(amiphod.clone());
+                new_amiphods.push(updated_amiphod);
+            } else {
+                new_amiphods.push(amiphod.clone());
+            }
         }
         new_playfield.amphipods = new_amiphods;
         return new_playfield;
