@@ -118,7 +118,7 @@ impl Playfield {
                             valid_moves.push(Move {
                                 from: position.clone(),
                                 to: Position::new(target_x, i),
-                                energy: amphipod.move_energy * steps as u64,
+                                energy: amphipod.move_energy * steps,
                             });
                             break;
                         }
@@ -289,19 +289,19 @@ fn main() {
         //    0    1    2    3    4    5    6    7    8    9    0    1    2
         vec!['#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'],
         vec!['#', '#', '#', 'B', '#', 'C', '#', 'B', '#', 'D', '#', '#', '#'],
-        // vec!['#', '#', '#', 'D', '#', 'C', '#', 'B', '#', 'A', '#', '#', '#'],
-        // vec!['#', '#', '#', 'D', '#', 'B', '#', 'A', '#', 'C', '#', '#', '#'],
+        vec!['#', '#', '#', 'D', '#', 'C', '#', 'B', '#', 'A', '#', '#', '#'],
+        vec!['#', '#', '#', 'D', '#', 'B', '#', 'A', '#', 'C', '#', '#', '#'],
         vec!['#', '#', '#', 'A', '#', 'D', '#', 'C', '#', 'A', '#', '#', '#'],
     ];
 
-    // let playfield_grid: Vec<Vec<char>> = vec![
-    //     //    0    1    2    3    4    5    6    7    8    9    0    1    2
-    //     vec!['#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'],
-    //     vec!['#', '#', '#', 'D', '#', 'A', '#', 'A', '#', 'D', '#', '#', '#'],
-    //     vec!['#', '#', '#', 'D', '#', 'C', '#', 'B', '#', 'A', '#', '#', '#'],
-    //     vec!['#', '#', '#', 'D', '#', 'B', '#', 'A', '#', 'C', '#', '#', '#'],
-    //     vec!['#', '#', '#', 'C', '#', 'C', '#', 'B', '#', 'B', '#', '#', '#'],
-    // ];
+    let playfield_grid: Vec<Vec<char>> = vec![
+        //    0    1    2    3    4    5    6    7    8    9    0    1    2
+        vec!['#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'],
+        vec!['#', '#', '#', 'D', '#', 'A', '#', 'A', '#', 'D', '#', '#', '#'],
+        vec!['#', '#', '#', 'D', '#', 'C', '#', 'B', '#', 'A', '#', '#', '#'],
+        vec!['#', '#', '#', 'D', '#', 'B', '#', 'A', '#', 'C', '#', '#', '#'],
+        vec!['#', '#', '#', 'C', '#', 'C', '#', 'B', '#', 'B', '#', '#', '#'],
+    ];
 
     let playfield = Playfield::new(playfield_grid);
 
@@ -318,6 +318,7 @@ fn main() {
                 println!("Finished! {}", finished[0].total_energy);
                 for finished_playfield in finished {
                     if finished_playfield.total_energy < min_energy {
+                        finished_playfield.print_playfield();
                         min_energy = finished_playfield.total_energy;
                     }
                 }
@@ -529,5 +530,61 @@ mod tests {
 
         assert_eq!(new_playfields.len(), 8);
         assert_eq!(new_playfields.iter().map(|p| p.total_energy).max().unwrap(), 900);
+    }
+
+    #[test]
+    fn test_part_calc() {
+        let playfield_grid: Vec<Vec<char>> = vec![
+            //    0    1    2    3    4    5    6    7    8    9    0    1    2
+            vec!['#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'],
+            vec!['#', '#', '#', 'B', '#', 'C', '#', 'B', '#', 'D', '#', '#', '#'],
+            vec!['#', '#', '#', 'D', '#', 'C', '#', 'B', '#', 'A', '#', '#', '#'],
+            vec!['#', '#', '#', 'D', '#', 'B', '#', 'A', '#', 'C', '#', '#', '#'],
+            vec!['#', '#', '#', 'A', '#', 'D', '#', 'C', '#', 'A', '#', '#', '#'],
+        ];
+        let mut playfield = Playfield::new(playfield_grid);
+        // struct Move {
+        //     from: Position,
+        //     to: Position,
+        //     energy: u64,
+        // }
+        assert_eq!(playfield.check_path(&Position { x: 9, y: 1 }, &Position { x: 11, y: 0 }), 3);
+        playfield = playfield.apply_move(Move {
+            from: Position { x: 9, y: 1 },
+            to: Position { x: 11, y: 0 },
+            energy: 3000,
+        });
+        assert_eq!(playfield.check_path(&Position { x: 9, y: 2 }, &Position { x: 1, y: 0 }), 10);
+        playfield = playfield.apply_move(Move {
+            from: Position { x: 9, y: 2 },
+            to: Position { x: 1, y: 0 },
+            energy: 10,
+        });
+        assert_eq!(playfield.check_path(&Position { x: 7, y: 1 }, &Position { x: 10, y: 0 }), 4);
+        playfield = playfield.apply_move(Move {
+            from: Position { x: 7, y: 1 },
+            to: Position { x: 10, y: 0 },
+            energy: 40,
+        });
+        assert_eq!(playfield.check_path(&Position { x: 7, y: 2 }, &Position { x: 8, y: 0 }), 3);
+        playfield = playfield.apply_move(Move {
+            from: Position { x: 7, y: 2 },
+            to: Position { x: 8, y: 0 },
+            energy: 30,
+        });
+        assert_eq!(playfield.check_path(&Position { x: 7, y: 3 }, &Position { x: 2, y: 0 }), 8);
+        playfield = playfield.apply_move(Move {
+            from: Position { x: 7, y: 3 },
+            to: Position { x: 2, y: 0 },
+            energy: 8,
+        });
+        assert_eq!(playfield.check_path(&Position { x: 5, y: 1 }, &Position { x: 7, y: 3 }), 6);
+        playfield = playfield.apply_move(Move {
+            from: Position { x: 5, y: 1 },
+            to: Position { x: 7, y: 3 },
+            energy: 600,
+        });
+
+        assert_eq!(playfield.total_energy, 3688);
     }
 }
