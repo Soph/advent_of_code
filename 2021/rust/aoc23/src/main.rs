@@ -54,13 +54,13 @@ struct Playfield {
 
 impl Hash for Playfield {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.playfield_string().hash(state);
+        self.grid.hash(state);
     }
 }
 
 impl PartialEq for Playfield {
     fn eq(&self, other: &Self) -> bool {
-        self.playfield_string() == other.playfield_string()
+        self.grid == other.grid
     }
 }
 impl Eq for Playfield {}
@@ -231,9 +231,8 @@ impl Playfield {
 
     fn apply_move(&self, move_: Move) -> Playfield {
         let mut new_playfield = self.clone();
-        let letter = new_playfield.grid[move_.from.y][move_.from.x];
+        new_playfield.grid[move_.to.y][move_.to.x] = new_playfield.grid[move_.from.y][move_.from.x];
         new_playfield.grid[move_.from.y][move_.from.x] = '.';
-        new_playfield.grid[move_.to.y][move_.to.x] = letter;
         new_playfield.total_energy += move_.energy;
         new_playfield.amphipods = Playfield::generate_amphipods(&new_playfield.grid);
         return new_playfield;
@@ -302,14 +301,22 @@ fn main() {
         vec!['#', '#', '#', 'A', '#', 'D', '#', 'C', '#', 'A', '#', '#', '#'],
     ];
 
+    let playfield_grid: Vec<Vec<char>> = vec![
+        //    0    1    2    3    4    5    6    7    8    9    0    1    2
+        vec!['#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'],
+        vec!['#', '#', '#', 'D', '#', 'A', '#', 'A', '#', 'D', '#', '#', '#'],
+        vec!['#', '#', '#', 'C', '#', 'C', '#', 'B', '#', 'B', '#', '#', '#'],
+    ];
+
     let playfield = Playfield::new(playfield_grid);
 
-    let mut playfields = vec![playfield];
+    let mut playfields = HashSet::new();
+    playfields.insert(playfield);
     let mut min_energy = std::u64::MAX;
 
-    let mut known: HashSet<String> = HashSet::new();
+    let mut known = HashSet::new();
     loop {
-        let mut new_playfields = vec![];
+        let mut new_playfields = HashSet::new();
         for playfield in &playfields {
             let new_candidates = playfield.generate_new_playfields();
             let finished: Vec<Playfield> = new_candidates.iter().filter(|p| p.is_done()).map(|p| p.clone()).collect();
@@ -320,15 +327,13 @@ fn main() {
                         min_energy = finished_playfield.total_energy;
                     }
                 }
-                continue;
-            } else {
-                for new_playfield in new_candidates {
-                    if known.contains(&new_playfield.playfield_string()) {
-                        continue;
-                    }
-                    known.insert(new_playfield.playfield_string());
-                    new_playfields.push(new_playfield);
+            }
+            for new_playfield in new_candidates {
+                if known.contains(&new_playfield) {
+                    continue;
                 }
+                known.insert(new_playfield.clone());
+                new_playfields.insert(new_playfield);
             }
         }
         println!("min cost: {}, playfields: {}", min_energy, new_playfields.len());
