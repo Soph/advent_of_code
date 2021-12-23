@@ -54,7 +54,7 @@ struct Playfield {
 
 impl Hash for Playfield {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.grid.hash(state);
+        self.playfield_string().hash(state);
     }
 }
 
@@ -310,14 +310,13 @@ fn main() {
 
     let playfield = Playfield::new(playfield_grid);
 
-    let mut playfields = HashSet::new();
-    playfields.insert(playfield);
+    let mut playfields = vec![playfield];
     let mut min_energy = std::u64::MAX;
 
-    let mut known = HashSet::new();
+    let mut known: HashMap<Playfield, u64> = HashMap::new();
     loop {
-        let mut new_playfields = HashSet::new();
-        for playfield in &playfields {
+        let mut new_playfields = vec![];
+        for playfield in playfields {
             let new_candidates = playfield.generate_new_playfields();
             let finished: Vec<Playfield> = new_candidates.iter().filter(|p| p.is_done()).map(|p| p.clone()).collect();
             if finished.len() > 0 {
@@ -329,11 +328,14 @@ fn main() {
                 }
             }
             for new_playfield in new_candidates {
-                if known.contains(&new_playfield) {
-                    continue;
+                let total_energy = new_playfield.total_energy;
+                if known.get(&new_playfield).is_none() {
+                    known.insert(new_playfield.clone(), total_energy);
+                    new_playfields.push(new_playfield);
+                } else if known.get(&new_playfield).unwrap() > &total_energy {
+                    known.insert(new_playfield.clone(), total_energy);
+                    new_playfields.push(new_playfield);
                 }
-                known.insert(new_playfield.clone());
-                new_playfields.insert(new_playfield);
             }
         }
         println!("min cost: {}, playfields: {}", min_energy, new_playfields.len());
