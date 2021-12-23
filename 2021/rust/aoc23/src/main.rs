@@ -231,21 +231,11 @@ impl Playfield {
 
     fn apply_move(&self, move_: Move) -> Playfield {
         let mut new_playfield = self.clone();
-        let mut new_amiphods = vec![];
-        for amiphod in &self.amphipods {
-            if amiphod.position == move_.from {
-                let mut updated_amiphod = amiphod.clone();
-                updated_amiphod.position = move_.to.clone();
-                let letter = new_playfield.grid[move_.from.y][move_.from.x];
-                new_playfield.grid[move_.from.y][move_.from.x] = '.';
-                new_playfield.grid[move_.to.y][move_.to.x] = letter;
-                new_playfield.total_energy += move_.energy;
-                new_amiphods.push(updated_amiphod);
-            } else {
-                new_amiphods.push(amiphod.clone());
-            }
-        }
-        new_playfield.amphipods = new_amiphods;
+        let letter = new_playfield.grid[move_.from.y][move_.from.x];
+        new_playfield.grid[move_.from.y][move_.from.x] = '.';
+        new_playfield.grid[move_.to.y][move_.to.x] = letter;
+        new_playfield.total_energy += move_.energy;
+        new_playfield.amphipods = Playfield::generate_amphipods(&new_playfield.grid);
         return new_playfield;
     }
 
