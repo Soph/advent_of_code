@@ -383,6 +383,7 @@ mod tests {
         let playfield = Playfield::new(playfield_grid);
 
         assert_eq!(playfield.possible_moves().len(), 1);
+        
     }
 
     #[test]
@@ -397,11 +398,8 @@ mod tests {
         let new_playfields = playfield.generate_new_playfields();
 
         assert_eq!(new_playfields.len(), 1);
-        for playfield in &new_playfields {
-            playfield.print_playfield();
-        }
-        assert_eq!(new_playfields.iter().filter(|p| p.is_done()).count(), 1);
-
+        assert_eq!(new_playfields[0].is_done(), true);
+        assert_eq!(new_playfields[0].total_energy, 200);
 
         let playfield_grid: Vec<Vec<char>> = vec![
             //    0    1    2    3    4    5    6    7    8    9    0    1    2
@@ -441,35 +439,27 @@ mod tests {
 
         assert_eq!(new_playfields.len(), 6);
         assert_eq!(new_playfields.iter().filter(|p| p.is_done()).count(), 0);
-        assert_eq!(new_playfields.iter().filter(|p| p.grid == result.grid).count(), 1); 
+        assert_eq!(new_playfields.iter().filter(|p| p.grid == result.grid).count(), 1);
         
-        // #DC........A#
-        // ###B#.#.#.###
-        // ###A#B#C#D###
-        // 0123456789012
-        // #.......A...#
-        // ###B#.#C#D###
-        // ###A#B#C#D###        
+        // #...B.......#
+        // ###B#C#.#D###
+        //   #A#D#C#A#
         let playfield_grid: Vec<Vec<char>> = vec![
             //    0    1    2    3    4    5    6    7    8    9    0    1    2
-            vec!['#', '.', '.', '.', '.', '.', '.', '.', 'A', '.', '.', '.', '#'],
-            vec!['#', '#', '#', 'B', '#', '.', '#', 'C', '#', 'D', '#', '#', '#'],
-            vec!['#', '#', '#', 'A', '#', 'B', '#', 'C', '#', 'D', '#', '#', '#'],
+            vec!['#', '.', '.', '.', 'B', '.', '.', '.', '.', '.', '.', '.', '#'],
+            vec!['#', '#', '#', 'B', '#', 'C', '#', '.', '#', 'D', '#', '#', '#'],
+            vec!['#', '#', '#', 'A', '#', 'D', '#', 'C', '#', 'A', '#', '#', '#'],
         ];
         let playfield = Playfield::new(playfield_grid);
-        // let result_grid: Vec<Vec<char>> = vec![
-        //     //    0    1    2    3    4    5    6    7    8    9    0    1    2
-        //     vec!['#', '.', '.', '.', '.', '.', '.', '.', 'B', '.', 'B', '.', '#'],
-        //     vec!['#', '#', '#', 'A', '#', '.', '#', '.', '#', 'D', '#', '#', '#'],
-        //     vec!['#', '#', '#', 'A', '#', 'C', '#', 'C', '#', 'D', '#', '#', '#'],
-        // ];
-        // let result = Playfield::new(result_grid);
+        let result_grid: Vec<Vec<char>> = vec![
+            //    0    1    2    3    4    5    6    7    8    9    0    1    2
+            vec!['#', '.', '.', '.', 'B', '.', '.', '.', '.', '.', '.', '.', '#'],
+            vec!['#', '#', '#', 'B', '#', '.', '#', 'C', '#', 'D', '#', '#', '#'],
+            vec!['#', '#', '#', 'A', '#', 'D', '#', 'C', '#', 'A', '#', '#', '#'],
+        ];
+        let result = Playfield::new(result_grid);
         let new_playfields = playfield.generate_new_playfields();
-        for p in &new_playfields {
-            p.print_playfield();
-        }
-        assert_eq!(new_playfields.len(), 6);
-        assert_eq!(new_playfields.iter().filter(|p| p.is_done()).count(), 0);
-        assert_eq!(new_playfields.iter().filter(|p| p.grid == result.grid).count(), 1);         
+        
+        assert_eq!(new_playfields.iter().filter(|p| p.grid == result.grid).next().unwrap().total_energy, 400);
     }
 }
