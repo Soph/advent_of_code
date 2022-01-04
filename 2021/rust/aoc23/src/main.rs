@@ -152,14 +152,17 @@ impl Playfield {
                     }
                 }
             }
-            for parking_position in self.free_parking_positions() {
-                let steps = self.check_path(&position, &parking_position);
-                if steps > 0 {
-                    valid_moves.push(Move {
-                        from: position.clone(),
-                        to: parking_position.clone(),
-                        energy: steps * amphipod.move_energy,
-                    });
+            // check hallway positions, but only if we aren't in the hallway already
+            if position.y > 0 {
+                for parking_position in self.free_parking_positions() {
+                    let steps = self.check_path(&position, &parking_position);
+                    if steps > 0 {
+                        valid_moves.push(Move {
+                            from: position.clone(),
+                            to: parking_position.clone(),
+                            energy: steps * amphipod.move_energy,
+                        });
+                    }
                 }
             }
         }
