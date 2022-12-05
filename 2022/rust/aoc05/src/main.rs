@@ -31,6 +31,8 @@ impl FromStr for Move {
     }
 }
 
+
+
 fn main() {
     let args = Cli::from_args();
     let all = read_and_parse(&args.path);
@@ -64,7 +66,15 @@ fn read_and_parse(path: &str) -> Vec<Move> {
     moves
 }
 
-// fn parse_stacks(lines: &str) -> Vec<Vec<char>> {
-//     let mut points = Vec::new();
-//     line.split("\n")
-// }
+/*
+    [D]    
+[N] [C]    
+[Z] [M] [P]
+ 1   2   3 
+*/
+fn parse_stacks(lines: &str) -> Vec<Vec<char>> {
+    let mut points = Vec::new();
+    for line in lines.split("\n") {
+        for 
+    }
+}
