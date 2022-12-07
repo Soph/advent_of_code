@@ -6,16 +6,13 @@ directories["/"] = {parent: nil, files: [], sizes: [], directories: []}
 path = []
 current_directory = ""
 lines.each do |line|
-  puts current_directory
   if line[0] == '$' # command
-    puts line
     if line[0..3] == '$ cd'
       if line == '$ cd ..' # move up
         path.pop
       else
         path << line[5..]
       end
-      puts path.inspect
       current_directory = path.join("/")
     elsif line[0..3] == '$ ls'
       # anything to do here ?
