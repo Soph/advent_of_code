@@ -8,7 +8,6 @@ def print_screen(screen)
 end
 
 def pos_to_xy(pos)
-  puts "#{pos}: #{pos%40}, #{pos/40}"
   return pos%40, pos/40
 end
 
@@ -38,12 +37,13 @@ current_op_cycles_left = 0
       current_op_cycles_left = 1
     end
   end
+  current_op_cycles_left -= 1
+
   draw_x, draw_y = pos_to_xy(cycle-1)
   sprite_m_x, sprite_m_y = pos_to_xy(x)
   if sprite_m_x - 1 <= draw_x && sprite_m_x + 1 >= draw_x
     screen[draw_y][draw_x] = "#"
   end
-  current_op_cycles_left -= 1
   print_screen(screen)
 
   if [20, 60, 100, 140, 180, 220].include?(cycle)
