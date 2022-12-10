@@ -15,7 +15,7 @@ screen = []
 6.times do |y|
   40.times do |x|
     screen[y] ||= []
-    screen[y] << "."
+    screen[y] << "⬛"
   end
 end
 
@@ -42,7 +42,7 @@ current_op_cycles_left = 0
   draw_x, draw_y = pos_to_xy(cycle-1)
   sprite_m_x, sprite_m_y = pos_to_xy(x)
   if sprite_m_x - 1 <= draw_x && sprite_m_x + 1 >= draw_x
-    screen[draw_y][draw_x] = "#"
+    screen[draw_y][draw_x] = "🟩"
   end
   print_screen(screen)
 
