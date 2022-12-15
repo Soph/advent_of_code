@@ -63,3 +63,51 @@ loop do
 end
 
 puts (not_possible - beacons).size
+
+skip_sensors = Set.new
+last_distances = {}
+point = Point.new(current_x, search_y)
+sensors.each do |sensor, value|
+  last_distances[sensor] = sensor.distance(point)
+end
+
+min_x = 0
+min_y = 0
+max_x = search_y * 2
+max_y = search_y * 2
+
+(min_y..max_y).each do |y|
+  x = 0
+  loop do
+    break if x >= max_x
+    point = Point.new(x, y)
+
+    found = false
+    sensors.each do |sensor, max_distance|
+      distance = sensor.distance(point)
+      if distance <= max_distance
+        if point.x <= sensor.x # sensor is right
+          x += 2 * (sensor.x - point.x)
+          found = true
+          break
+        elsif point.x > sensor.x # sensor is left
+          x += max_distance - distance
+          found = true
+          break
+        end
+      end
+    end
+
+    if found == false
+      puts point
+      puts "Result2: #{point.x*4000000+point.y}"
+      exit
+    end
+    x+=1
+  end
+  puts y if y % 100000 == 0
+end
+        
+# ........lxxxx........
+# .......xxxxxxx.......
+# ......xxxxSxxxx......
