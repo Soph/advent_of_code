@@ -33,6 +33,8 @@ valves.values.each do |valve|
   end
 end
 
+puts "Done Initializing"
+
 open_valves = Set.new
 current = "AA"
 @max_released = 0
@@ -40,8 +42,8 @@ current = "AA"
 time = 30
 total_released = 0
 current_rate = 0
-openable_valves_count = valves.values.select{|valve| valve.rate > 0 }.size
 variants = [{open: ["AA"], rate: 0, total_release: 0, time_left: 30}]
+done = []
 loop do
   new_variants = []
   found = false
@@ -50,9 +52,13 @@ loop do
     valves.values.each do |v|
       next if v.rate == 0
       next if variant[:open].include?(v.name)
-      found = true
       distance = @distances[valve.name][v.name]
       time_spent = distance + 1 # move + open
+      if variant[:time_left] <= time_spent
+        done << variant.clone
+        next
+      end
+      found = true
       new_variant = {
         open: variant[:open] + [v.name],
         total_release: variant[:total_release] + time_spent * variant[:rate],
@@ -63,10 +69,19 @@ loop do
     end
   end
   break if !found
+  # best = {}
+  # new_variants.each do |new_variant|
+  #   if best[new_variant[:open].sort].nil? || best[new_variant[:open].sort][:rate] * best[new_variant[:open].sort][:time_left] < new_variant[:rate] * new_variant[:time_left]
+  #     best[new_variant[:open].sort] = new_variant 
+  #   end
+  # end
+  # variants = best.values
   variants = new_variants
+  #variants.map {|m| puts "#{m.inspect} #{m[:total_release] + m[:rate] * m[:time_left]}"}
+  puts "#{variants.size} #{done.size}"
 end
 # variants.map {|m| puts m.inspect}
-final = variants.map do |v|
+final = (variants + done).map do |v|
   v[:total_release] += v[:rate] * v[:time_left]
   v[:time_left] = 0
   v
@@ -78,58 +93,68 @@ time = 26
 total_released = 0
 current_rate = 0
 openable_valves_count = valves.values.select{|valve| valve.rate > 0 }.size
-variants = [{open: ["AA"], elephant: ["AA"], me: ["AA"], rate_e: 0, total_release_e: 0, time_left_e: 26, rate_m: 0, total_release_m: 0, time_left_m: 26}]
+variants = [{
+  open: ["AA"], 
+  elephant: {
+    open: ["AA"],
+    rate: 0,
+    total_release: 0,
+    time_left: 26,
+  },
+  me: {
+    open: ["AA"],
+    rate: 0,
+    total_release: 0,
+    time_left: 26,
+  }}]
+done = []
 loop do
   new_variants = []
   found = false
   variants.each do |variant|
     distances = {}
-    distances[:elephant] = valves.values.select{|v| v.rate > 0 && !variant[:open].include?(v.name)}.map{|v| [v.name, @distances[variant[:elephant].last][v.name]] }.to_h
-    distances[:me] = valves.values.select{|v| v.rate > 0 && !variant[:open].include?(v.name)}.map{|v| [v.name, @distances[variant[:me].last][v.name]] }.to_h
-    #puts variant.inspect
-    #puts distances.inspect
+    distances[:elephant] = valves.values.select{|v| v.rate > 0 && !variant[:open].include?(v.name)}.map{|v| [v.name, @distances[variant[:elephant][:open].last][v.name]] }.to_h
+    distances[:me] = valves.values.select{|v| v.rate > 0 && !variant[:open].include?(v.name)}.map{|v| [v.name, @distances[variant[:me][:open].last][v.name]] }.to_h
 
-    [[:me, :elephant], [:elephant, :me]].each do |actors|
-      distances[actors[0]].each do |name_1, distance_1|
-        distances[actors[1]].each do |name_2, distance_2|
-          next if name_1 == name_2
-          next if distance_1 > distance_2
-          found = true
-          time_spent_1 = distance_1 + 1
-          time_spent_2 = distance_2 + 1 - time_spent_1
-          if distance_1 == distance_2
-            time_spent_2 = 0
-          end
-          new_variant = {
-            open: variant[:open] + [name_1, name_2],
-            time_left: variant[:time_left] - (distance_2 + 1),
-            rate: variant[:rate] + valves[name_1].rate + valves[name_2].rate,
-            elephant: variant[:elephant].clone,
-            me: variant[:me].clone,
-            total_release: variant[:total_release]
-          }
-          new_variant[actors[0]] << name_1 
-          new_variant[actors[1]] << name_2
-          new_variant[:total_release] += (time_spent_1 * variant[:rate]) + (time_spent_2 * (variant[:rate] + valves[name_1].rate))
-          new_variants << new_variant
-          if new_variant[:open][0..3] == ["AA","DD", "JJ", "BB"]
-            puts distances.inspect
-            puts "#{variant.inspect} -> #{new_variant.inspect}"
-          end
+    [:me, :elephant].each do |actor|
+      distances[actor].each do |name, distance|
+        time_spent = distance + 1 # move + open
+        if variant[actor][:time_left] <= time_spent
+          done << variant.clone
+          next
         end
+        found = true
+        new_variant = {}
+        new_variant[:open] = variant[:open] + [name]
+        new_variant[:elephant] = variant[:elephant].clone
+        new_variant[:me] = variant[:me].clone
+        new_variant[actor] = {
+          open: variant[actor][:open] + [name],
+          total_release: variant[actor][:total_release] + time_spent * variant[actor][:rate],
+          rate: variant[actor][:rate] + valves[name].rate,
+          time_left: variant[actor][:time_left] - time_spent
+        }
+        new_variants << new_variant
       end
     end
   end
   break if !found
   variants = new_variants
+  puts "#{variants.size} #{done.size}"
+  #variants.map {|m| puts m.inspect}
 end
+
 # variants.map {|m| puts m.inspect}
-final = variants.map do |v|
-  v[:total_release] += v[:rate] * v[:time_left]
-  v[:time_left] = 0
+final = (variants + done).map do |v|
+  [:me, :elephant].each do |actor|
+    v[actor][:total_release] += v[actor][:rate] * v[actor][:time_left]
+    v[actor][:time_left] = 0
+  end
+  v[:total_release] = v[:elephant][:total_release] + v[:me][:total_release]
   v
 end
 
+#final.map {|m| puts m.inspect}
 puts "Result 2: #{final.sort{|x,y| y[:total_release]<=>x[:total_release]}.first.inspect}"
 
 #"DD", "JJ", "BB", "HH", "CC", "EE"
