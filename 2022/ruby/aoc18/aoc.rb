@@ -46,46 +46,50 @@ max_z += 1
 searchs = [Cube.new(0,0,0)]
 visited = Set.new
 outsides = Set.new
+max = [0,0,0]
 loop do
   search = searchs.shift
+  break if search.nil?
+  next if visited.include?(search)
   visited << search
-  outs = sides & search.sides
-  if !outs.empty?
-    puts "outs: #{outs.map(&:to_s).join(" - ")}"
-    outsides += outs
-  end
-  next_cubes = Set.new
+  outsides += sides & search.sides
+  next_cubes = []
+
   (search.sides - sides).each do |side|
     case search.sides.index(side)
     when 0 #front
-      next if search.z - 1 < 0
+      puts "bounds" && next if search.z - 1 < 0
       next_cubes << Cube.new(search.x, search.y, search.z - 1)
     when 1 #left
-      next if search.x - 1 < 0
+      puts "bounds" && next if search.x - 1 < 0
       next_cubes << Cube.new(search.x - 1, search.y, search.z)
     when 2 #bottom
-      next if search.y - 1 < 0
+      puts "bounds" && next if search.y - 1 < 0
       next_cubes << Cube.new(search.x, search.y - 1, search.z)
     when 3 #right
-      next if search.x + 1 > max_x
+      puts "bounds" && next if search.x + 1 > max_x
       next_cubes << Cube.new(search.x + 1, search.y, search.z)
     when 4 #top
-      next if search.y + 1 > max_y
+      puts "bounds" && next if search.y + 1 > max_y
       next_cubes << Cube.new(search.x, search.y + 1, search.z)
     when 5 #rear
-      next if search.z + 1 > max_z
+      puts "bounds" && next if search.z + 1 > max_z
       next_cubes << Cube.new(search.x, search.y, search.z + 1)
     end
   end
-  next_cubes = next_cubes.select{|c| !visited.include?(c)}.select{|c| !cubes.include?(c)}
-  break if next_cubes.empty?
   searchs += next_cubes
   searchs.uniq!
-  # puts "Search: #{searchs.map(&:to_s).join(" - ")}"
-  # puts "Visited: #{visited.map(&:to_s).join(" - ")}"
-  puts visited.count
-  puts searchs.count
-  #sleep 2
+  break if searchs.empty?
+  if search.x > max[0]
+    max[0] = search.x
+    puts "#{max.inspect} - #{outsides.size} - #{searchs.size}"
+  elsif search.y > max[1]
+    max[1] = search.y
+    puts "#{max.inspect} - #{outsides.size} - #{searchs.size}"
+  elsif search.z > max[2]
+    max[2] = search.z
+    puts "#{max.inspect} - #{outsides.size} - #{searchs.size}"
+  end
 end
 
 puts "Result2: #{outsides.size}"
