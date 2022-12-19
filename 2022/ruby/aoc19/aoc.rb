@@ -37,14 +37,13 @@ blueprints.each do |id, blueprint|
   done = Set.new
   max = 0
   loop do
+    #puts options.inspect
+    #sleep 1
     option = options.take(1).first
     break if options.size == 0
     options.delete(option)
 
-    #if done.size > 800
-    #  puts "Start: #{option.inspect}"
-    #end
-    if (option[:geode] + (option[:geode_robot] + 1) * option[:time]) < max
+    if (option[:geode] + (option[:geode_robot] + 1) * option[:time]) <= max
       #throw away
       next
     end
@@ -67,6 +66,7 @@ blueprints.each do |id, blueprint|
         puts "Build Geode Robot. time:#{time} - #{option} -> #{opt}"
       end
     end
+
     if option[:clay_robot] > 0 # produces clay -> can build obsidian robot now
       ore_needed = [0,(blueprint[:obsidian_robot][0] - option[:ore])].max
       clay_needed = [0,(blueprint[:obsidian_robot][1] - option[:clay])].max
@@ -74,6 +74,7 @@ blueprints.each do |id, blueprint|
       if ore_needed != 0 || clay_needed != 0
         time += [(ore_needed.to_f/option[:ore_robot]).ceil, (clay_needed.to_f/option[:clay_robot]).ceil].max
       end
+      #puts "Obsidian: ore: #{blueprint[:obsidian_robot][0]}/#{ore_needed}, obsidian: #{blueprint[:obsidian_robot][1]}/#{clay_needed} -> time: #{time}"
 
       if option[:time] - time > 0 # enough time
         opt = option.clone
@@ -83,13 +84,6 @@ blueprints.each do |id, blueprint|
         opt[:ore] -= blueprint[:obsidian_robot][0] # exising ore + new produced ore - cost of ore for robot
         opt[:clay] -= blueprint[:obsidian_robot][1] # exising ore + new produced ore - cost of ore for robot
         new_options << opt
-        if option[:obsidian_robot] > 1
-          puts "Build Obsidian Robot. time:#{time} - #{option} -> #{opt}"
-          break
-        end
-      else
-        puts "Skip Build Obsidian Robot. time:#{time}/#{option[:time]} - #{option} -> #{opt}"
-        
       end
     end
     # build another clay robot
@@ -115,6 +109,8 @@ blueprints.each do |id, blueprint|
       opt[:ore] -= blueprint[:ore_robot][0] # exising ore + new produced ore - cost of ore for robot
       new_options << opt
     end
+
+    ## done building
     found = false
     new_options.each do |new_option|
       next if done.include?(new_option)
@@ -123,20 +119,12 @@ blueprints.each do |id, blueprint|
       found = true
     end
     done << option if !found
-    #if done.size > 800
-    #  puts "new_options: #{new_options.inspect}"
-    #  sleep 1
-    #end
+
     new_max = done.map{|d| d[:geode] + (d[:geode_robot] * d[:time])}.max
     if new_max && new_max > max
       max = new_max
     end
-    #sleep 1
-    #if done.size > 200
-    #  puts "new_options: #{new_options}"
-    #  #puts "done: #{done}"
-    #  sleep 10
-    #end    
+   
     puts "done: #{done.size} options: #{options.size} max:#{max}"
   end
   #puts done.sort_by{|d| d[:geode_robot]}
