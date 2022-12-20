@@ -33,7 +33,6 @@ Rock = Struct.new(:points) do
 
   def copy_to_start_position(x:, y:)
     new_points = points.map {|p| Point.new(p.x + x, p.y + y)}
-    #puts "#{x}, #{y}: #{points.map(&:to_s)}"
     return Rock.new(new_points)
   end
 end
@@ -57,17 +56,12 @@ Cave = Struct.new(:min_x, :max_x, :stones) do
   end
 
   def reduce!
-    #puts "Before: #{stones.inspect}"
     min_y = (0..max_x).map{|x| stones.select {|p| p.x == x}.map(&:y).max || 0}.compact.min
     self.stones = stones.select {|p| p.y >= min_y}.map{|p| Point.new(p.x, p.y-min_y)}
-    #puts (0..max_x).map{|x| stones.select {|p| p.x == x}.map(&:y).max || 0}.inspect
-    #puts "After: #{stones.inspect}"
-    #puts
     return min_y
   end
 
   def cache_key
-    #puts stones.map(&:to_s).join("-")
     stones.map(&:to_s).join("-")
   end
 
@@ -117,57 +111,44 @@ while i < counter
   if !shifted && cache[cache_key] && cache[cache_key][cave_cache_key]
     cave.visualize([])
     shifted = true
-    puts "Shifted from #{i} and #{total_y} #{move_n}"
+    puts "Warp from #{i} and #{total_y} #{move_n} because seen at #{cache[cache_key][cave_cache_key][:i]} already"
     puts cache[cache_key][cave_cache_key]
     offset_count = i - cache[cache_key][cave_cache_key][:i]
     offset_y = total_y - cache[cache_key][cave_cache_key][:y]
-    puts "Offsets #{offset_count} #{offset_y}"
     times = (counter - i) / offset_count
-    puts "(#{counter} - #{i}) / #{offset_count} = #{times}"
-    move_n += cache[cache_key][cave_cache_key][:moves]
-    move_n += (cache[cache_key][cave_cache_key][:moves] * times)
-    move_n %= moves.size
     total_y += offset_y * times
     i += offset_count * times
-    rock_i += (offset_count * times)
-    rock_i %= rocks.count
+
+    move_n = cache[cache_key][cave_cache_key][:move_n]
+    rock_i = cache[cache_key][cave_cache_key][:rock_i]
     puts "to #{i} and #{total_y} #{move_n}"
     cave.stones = cache[cache_key][cave_cache_key][:points]
     cave.visualize([])
   end
   rock = rocks[rock_i].copy_to_start_position(x: cave.start_x, y: cave.start_y)
-  move_loop = 0
   loop do
-    #cave.visualize(rock.points) if i == 48
     move = moves[move_n]
-    puts "#{i} #{move}: #{rock.to_s}"
+    puts "#{i} #{move}: #{rock.to_s} #{rock_i} #{move_n % moves.size}"
     rock.move_direction(move, cave)
-    #cave.visualize(rock.points) if i == 48
     move_n = (move_n + 1) % moves.size
-    move_loop += 1
     break unless rock.move_direction("|", cave)
-    #puts "-> #{rock.to_s}"    
-    #cave.visualize(rock.points)
   end
   cave.stones += rock.points
   total_y += cave.reduce!
+  rock_i = (rock_i + 1) % rocks.count
   cache[cache_key] ||= {}
   cache[cache_key][cave_cache_key] = {
-    moves: move_loop,
+    move_n: move_n,
+    rock_i: rock_i,
     points: cave.stones,
     y: total_y,
     i: i
   }  
-  total_y += cave.reduce!
-  rock_i = (rock_i + 1) % rocks.count
   i += 1
 
-  #cave.visualize(rock.points)
-  #puts "#{i}: #{cave.max_y}"
-  #puts cave.stones.size
   puts i if i % 100000 == 0
-  #sleep 1
-  #exit if i == 4
 end
 
-puts cave.max_y + total_y
+# no clue, but for part 1 it's off by 1 so first counts
+puts "Part 1: #{cave.max_y + total_y + 1}"
+puts "Part 2: #{cave.max_y + total_y}"
