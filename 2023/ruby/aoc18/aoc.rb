@@ -23,7 +23,6 @@ instructions.each do |instruction|
   end
 end
 
-puts HOLES.inspect
 sorted_x = HOLES.keys.sort_by{|hole| hole[0]}
 MIN_X = sorted_x.first[0] - 1
 MAX_X = sorted_x.last[0] + 1
@@ -54,3 +53,16 @@ puts EMPTY.size
 grid_size =  ((MAX_X-MIN_X)+1) * ((MAX_Y-MIN_Y)+1)
 puts "Part1: #{grid_size-EMPTY.size}"
 
+
+# sum = 0
+# (MIN_Y...MAX_Y).each do |y|
+#   (MIN_X...MAX_X).each do |x|
+#     if HOLES[[x,y]]
+#       putc "#"
+#     else
+#       putc "."
+#     end
+#   end
+#   sum += (MIN_X...MAX_X).size - EMPTY.select{|pos| pos[1] == y}.size + 1
+#   puts " - #{y}: #{((MIN_X...MAX_X).size - EMPTY.select{|pos| pos[1] == y}.size) + 1} - #{sum}"
+# end
