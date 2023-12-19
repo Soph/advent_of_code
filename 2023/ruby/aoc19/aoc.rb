@@ -29,8 +29,8 @@ parts = sections[1].split("\n").map do |line|
   items
 end
 
-puts workflows.inspect
-puts parts.inspect
+#puts workflows.inspect
+#puts parts.inspect
 
 accepted = []
 parts.each do |part|
@@ -42,9 +42,9 @@ parts.each do |part|
       next_workflow = nil
       if instruction.size == 1
         next_workflow = instruction[0]
-        puts "next: #{next_workflow.inspect}"
+        #puts "next: #{next_workflow.inspect}"
       elsif part[instruction[0]]
-        puts "Checking #{instruction.inspect} on #{part.inspect}}"
+        #puts "Checking #{instruction.inspect} on #{part.inspect}}"
         if instruction[1] == ">"
           if part[instruction[0]] > instruction[2]
             next_workflow = instruction[3]
@@ -57,16 +57,16 @@ parts.each do |part|
       end
       if next_workflow
         if next_workflow == 'A'
-          puts "#{part.inspect} Accepted"
+          #puts "#{part.inspect} Accepted"
           accepted << part
           done = true
           break
         elsif next_workflow == 'R'
-          puts "#{part.inspect} Rejected"
+          #puts "#{part.inspect} Rejected"
           done = true
           break
         else
-          puts "New: #{next_workflow}"
+          #puts "New: #{next_workflow}"
           workflow = workflows[next_workflow]
           break
         end
@@ -76,7 +76,7 @@ parts.each do |part|
   end
 end
 
-puts accepted.inspect
+#puts accepted.inspect
 
-puts accepted.map{|a| a.values.sum}.inspect
+#puts accepted.map{|a| a.values.sum}.inspect
 puts accepted.map{|a| a.values.sum}.sum
