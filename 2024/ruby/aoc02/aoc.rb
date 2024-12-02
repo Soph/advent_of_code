@@ -1,82 +1,40 @@
 file = File.open(ARGV[0])
 reports = file.readlines.map(&:chomp).map{|line| line.split(" ").map(&:to_i)}
 
-safes_1 = []
-safe_count = 0
-reports.each do |report|
-  safe = true
-  next if report[0] == report[1] # equal isn't allowed either
+def valid?(report)
+  return false if report[0] == report[1] # equal isn't allowed either
 
   up = report[0] < report[-1]
   last = report[0]
   report[1..].each do |number|
-    if number < last && up
-      safe = false
-      break
-    end
-    if number > last && !up
-      safe = false
-      break
-    end
-    if ![1,2,3].include?((number-last).abs)
-      safe = false
-      break
-    end
+    return false if number < last && up
+    return false if number > last && !up
+    return false if ![1,2,3].include?((number-last).abs)
     last = number
   end
 
-  if safe
-    safe_count += 1
-    safes_1 << report
-  end
+  true
+end
+
+safe_count = 0
+reports.each do |report|
+  safe_count += 1 if valid?(report)
 end
 
 puts "Part1: #{safe_count}"
 
-safes_2 = []
 safe_count = 0
-
-def failures(report)
-  failures = 0
-  up = report[0] < report[-1]
-  last = report[0]
-
-  report[1..].each do |number|
-    break if failures > 1
-    if last == number
-      failures += 1
-      next
-    end
-    if number < last && up
-      failures += 1
-      next
-    end
-    if number > last && !up
-      failures += 1
-      next
-    end
-    if ![1,2,3].include?((number-last).abs)
-      failures += 1
-      next
-    end
-    last = number
-  end
-
-  failures
-end
 reports.each do |report|
-  if failures(report) <= 1
+  if valid?(report)
     safe_count += 1
-    safes_2 << report
-  else
-    # algo can't handle the first being the one to drop, so let's retry without the first
-    if failures(report[1..]) == 0
+    next
+  end
+  report.size.times do |i|
+    if valid?(report[0...i] + report[i+1...])
       safe_count += 1
-      safes_2 << report 
+      break
     end
   end
 end
 
 puts "Part2: #{safe_count}"
-
-#puts safes_2.inspect
