@@ -4,8 +4,6 @@ file = File.open(ARGV[0])
 lines = file.readlines.map(&:chomp)
 
 memory = []
-memory_2 = []
-memory_2_org = []
 groups = []
 
 count = 0
@@ -13,9 +11,6 @@ lines[0].chars.each_slice(2) do |file, space|
   memory << [count.to_s] * file.to_i
   memory << ["."] * space.to_i
   groups << [count.to_s] * file.to_i
-
-  memory_2 << [[count] * file.to_i, ["."] * space.to_i]
-  memory_2_org << [[count] * file.to_i, ["."] * space.to_i]
   count += 1
 end
 
