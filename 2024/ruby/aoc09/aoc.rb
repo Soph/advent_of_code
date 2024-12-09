@@ -50,23 +50,8 @@ groups.reverse.each do |group|
   # remove old
   before_old = p2_memory[group_index-1]
   after_old = p2_memory[group_index+1]
-  if before_old[0] == "." && after_old[0] == "."
-    p2_memory.delete_at(group_index+1)
-    p2_memory.delete_at(group_index)
-    p2_memory.delete_at(group_index-1)
-    p2_memory.insert(group_index-1, ["."]*(group.size+before_old.size+after_old.size))
-  elsif before_old[0] == "."
-    p2_memory.delete_at(group_index)
-    p2_memory.delete_at(group_index-1)
-    p2_memory.insert(group_index-1, ["."]*(group.size+before_old.size))
-  elsif after_old[0] == "."
-    p2_memory.delete_at(group_index+1)
-    p2_memory.delete_at(group_index)
-    p2_memory.insert(group_index, ["."]*(group.size+after_old.size))
-  else
-    p2_memory[group_index] = ["."]*group.size
-  end
-  
+
+  p2_memory[group_index] = ["."] * group.size
   p2_memory[first_index] = ["."] * (p2_memory[first_index].size - group.size)
   p2_memory.insert(first_index, group)
 end
