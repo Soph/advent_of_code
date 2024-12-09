@@ -47,10 +47,6 @@ groups.reverse.each do |group|
   # is this more forward?
   next if first_index.nil? || group_index <= first_index
 
-  # remove old
-  before_old = p2_memory[group_index-1]
-  after_old = p2_memory[group_index+1]
-
   p2_memory[group_index] = ["."] * group.size
   p2_memory[first_index] = ["."] * (p2_memory[first_index].size - group.size)
   p2_memory.insert(first_index, group)
