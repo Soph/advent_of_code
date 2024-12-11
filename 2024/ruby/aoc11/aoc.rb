@@ -10,20 +10,14 @@ data.each do |stone|
 end
 
 75.times do |i|
-  new_stones = {}
+  new_stones = Hash.new(0)
   stones.keys.each do |stone|
     if stone == 0
-      new_stones[1] ||= 0
       new_stones[1] += (1 * stones[stone])
     elsif stone.to_s.size % 2 == 0
-      stone_left = stone.to_s[0...stone.to_s.size/2].to_i
-      stone_right = stone.to_s[stone.to_s.size/2..].to_i
-      new_stones[stone_left] ||= 0
-      new_stones[stone_left] += stones[stone]
-      new_stones[stone_right] ||= 0
-      new_stones[stone_right] += stones[stone]
+      new_stones[stone.to_s[0...stone.to_s.size/2].to_i] += stones[stone]
+      new_stones[stone.to_s[stone.to_s.size/2..].to_i] += stones[stone]
     else
-      new_stones[2024*stone] ||= 0
       new_stones[2024*stone] += stones[stone]
     end
   end
