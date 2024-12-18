@@ -46,53 +46,35 @@ walls = corrupted[0...max]
 
 def find_path(start, exit, walls)
   directions = [[1,0], [0,1], [-1,0], [0,-1]]
-  visited = {}
+  visited = Set.new
   to_check = [start]
+  i = 0
   while !to_check.empty?
-    pos = to_check.sort_by{|pos| visited[pos]}.first
-    to_check.delete(pos)
-    cost, path = visited[pos]
-    cost ||= 0
-    path ||= []
-
-    directions.each do |dir|
-      new_pos = [pos[0]+dir[0], pos[1]+dir[1]]
-      next if out_of_bounds?(new_pos)
-      next if walls.include?(new_pos)
-      next if path.include?(new_pos)
-
-      if new_pos == exit
-        if visited[new_pos].nil?
-          visited[new_pos] = [cost + 1, path + [new_pos]]
-        elsif visited[new_pos][0] > cost + 1
-          visited[new_pos] = [cost + 1, path + [new_pos]]
-        end
-      end
-
-      if visited[new_pos].nil? || visited[new_pos][0] > cost + 1
-        visited[new_pos] = [cost + 1, path + [new_pos]]
-        to_check << new_pos
-        #print_grid(walls, new_pos)
-        #puts
+    new_to_check = Set.new
+    to_check.each do |pos|
+      directions.each do |dir|
+        new_pos = [pos[0]+dir[0], pos[1]+dir[1]]
+        next if out_of_bounds?(new_pos)
+        next if walls.include?(new_pos)
+        next if visited.include?(new_pos)
+        
+        visited << new_pos
+        new_to_check << new_pos
       end
     end
+    i += 1
+    to_check = new_to_check
+    return i if to_check.include?(exit)
   end
-  visited[exit]
 end
 
-result_1 = find_path(start, exit, walls)
-puts "Part1: #{result_1[0]}"
+result_1 = find_path(start, exit, walls.to_set)
+puts "Part1: #{result_1}"
 
-path = result_1[1]
 corrupted[max..].each_with_index do |cor, i|
-  index = path.index(cor)
-  if !index.nil?
-    puts "#{cor} - #{corrupted[i+max-5..i+max]}"
-    new_path = find_path(path[index-1], path[index+1], corrupted[0..i+max])
-    if new_path.nil?
-      print_grid(corrupted[0..i+max], path, cor)
-      puts "Part2: #{cor}"
-      break
-    end
+  result = find_path(start, exit, corrupted[0..i+max].to_set)
+  if result.nil?
+    puts "Part2: #{cor[0]},#{cor[1]}"
+    break
   end
 end
