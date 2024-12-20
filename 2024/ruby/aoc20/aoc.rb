@@ -16,8 +16,10 @@ lines.each_with_index do |line, y|
   line.split("").each_with_index do |pos, x|
     if pos == "S"
       start = [x,y]
+      steps << [x,y]
     elsif pos == "E"
       finish = [x,y]
+      steps << [x,y]
     elsif pos == "#"
       walls << [x,y]
     elsif pos == "."
@@ -109,46 +111,33 @@ while !to_check.empty?
   to_check = new_to_check
 end
 
-puts distances.keys.size
-
 path = find_path(start,finish,walls)
 length = path.size
 path.insert(0, start)
-   #
-  # #   
- # s #   
-  # #
-   #    
-cache = {}
-checks = [[-2,0], [2,0], [0,-2], [0, 2], [1, 1], [1, -1], [-1, 1], [-1, -1]]
-
-10.times do |i|
-  puts "#{path[i]}: #{distances[path[i]]}"
-end
 
 def distance(a, b)
-  [(a[0] - b[0]).abs,(a[1] - b[1]).abs].max
+  (a[0] - b[0]).abs+(a[1] - b[1]).abs
 end
 
-cheat_positions = Set.new
-safes = {}
-path.each_with_index do |pos, i|
-  next if pos == finish
-  checks.each do |check|
-    new_pos = [pos[0]+check[0],pos[1]+check[1]]
-    next if walls.include?(new_pos) # must be back on a track
-    next if out_of_bounds?(new_pos)
-    next if distances[new_pos]+2 >= distances[pos] # is farer away then next step
-    #puts "#{pos} -> #{new_pos} vs #{path[i+1]}"
-    #require "pry"; binding.pry
-    safe = distances[pos] - (distances[new_pos] + 2)
-    #puts "#{distances[pos]} - #{distances[new_pos]+2} -> #{safe}"
-    safes[safe] ||= 0
-    safes[safe] += 1
-    cheat_positions << [pos, new_pos] if safe >= 100
+def find_cheats(path, finish, distance, distances, steps)
+  safes = {}
+  found = Set.new
+  path.each_with_index do |pos, i|
+    next if pos == finish
+    steps.select{|step| distance(pos, step) <= distance }.each do |new_pos|
+      d = distance(pos, new_pos)
+      next if found.include?([pos,new_pos])
+      next if distances[new_pos]+d >= distances[pos] # is farer away then next step
+      found << [pos,new_pos]
+      safe = distances[pos] - (distances[new_pos] + d)
+      safes[safe] ||= 0
+      safes[safe] += 1
+    end
   end
+  safes
 end
 
-puts cheat_positions.size
-puts safes.inspect
-puts safes.select{|key,value| key >= 100}.values.sum
+min_distance = ARGV[0] =~ /_test/ ? 0 : 100
+puts "Part1: #{find_cheats(path, finish, 2, distances, steps).select{|key,value| key >= min_distance}.values.sum}"
+min_distance = ARGV[0] =~ /_test/ ? 50 : 100
+puts "Part2: #{find_cheats(path, finish, 20, distances, steps).select{|key,value| key >= min_distance}.values.sum}"
