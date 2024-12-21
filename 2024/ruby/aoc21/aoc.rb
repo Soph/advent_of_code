@@ -87,14 +87,29 @@ end
 
 
 result = 0
+@cache = {}
 numbers.each do |number|
   res = move("A",[number], @key_mapping_coordinates, [0,3])
-  res = move("A",res, @arrow_mapping_coordinates, [0,0])
-  res = move("A",res, @arrow_mapping_coordinates, [0,0])
-  #res = res.split("").map{|key| @arrow_mapping[key]}.join
-  #puts "#{number}: #{res}"
-  puts "#{res.map{|r| r.size }.sort[0]} * #{number[0..2].to_i}"
-  result += res.map{|r| r.size }.sort[0] * number[0..2].to_i
+  strings = []
+  res.each do |subres|
+    if @cache[subres]
+      strings << @cache[subres]
+    else
+      string = ""
+      subres.split("A").map{|v| v + "A"}.each do |part|
+        subsubres = [part]
+        2.times do |i|
+          subsubres = move("A",subsubres, @arrow_mapping_coordinates, [0,0])
+        end
+        shortest = subsubres.sort_by{|r| r.size}[0] 
+        @cache[subres] = shortest
+        string << shortest
+      end
+      strings << string
+    end
+  end
+  puts "#{strings.sort_by{|r| r.size}[0].size} * #{number[0..2].to_i}"
+  result += strings.sort_by{|r| r.size}[0].size * number[0..2].to_i
 end
 
 puts "Part1: #{result}"
