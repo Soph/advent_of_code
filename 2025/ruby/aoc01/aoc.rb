@@ -28,11 +28,21 @@ lines.each do |line|
   else
     dial -= mov
   end
-  before_mod = dial
-  zeros += before_mod.abs / 100
-  dial %= 100
-
-  puts "#{before} #{line[0] == 'R' ? '+' : '-'} #{line[1..]} -> #{dial} --> #{zeros}" # if zeros - before_zeros > 0
+  if dial.zero?
+    zeros += 1
+  else
+    add_zero = (dial / 100).abs
+    if add_zero.positive? && line[0] == 'L'
+      if before.zero?
+        add_zero -= 1
+      elsif (dial % 100).zero?
+        add_zero += 1
+      end
+    end
+    zeros += add_zero
+    dial %= 100
+  end
+  # puts "#{before} #{line[0] == 'R' ? '+' : '-'} #{line[1..]} -> #{dial} --> #{zeros}" # if zeros - before_zeros > 0
 end
 
 puts "Part 2: #{zeros}"
