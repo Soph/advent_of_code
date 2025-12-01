@@ -21,7 +21,7 @@ zeros = 0
 
 lines.each do |line|
   mov = line[1..].to_i
-  zeros += mov / 100
+  # zeros += mov / 100
   before = dial
   if line[0] == 'R'
     dial += mov
@@ -29,12 +29,9 @@ lines.each do |line|
     dial -= mov
   end
   before_mod = dial
+  zeros += before_mod.abs / 100
   dial %= 100
-  if dial.zero?
-    zeros += 1
-  elsif before != 0 && before_mod != dial
-    zeros += 1
-  end
+
   puts "#{before} #{line[0] == 'R' ? '+' : '-'} #{line[1..]} -> #{dial} --> #{zeros}" # if zeros - before_zeros > 0
 end
 
