@@ -7,30 +7,6 @@ def distance(a, b)
   Math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2 + (a[2] - b[2])**2)
 end
 
-def compact(connections)
-  loop do
-    found = false
-    new_connections = Set.new
-    connections.each do |con|
-      existing = connections.select do |c|
-        c != con && con.map { |c2| c.include?(c2) }.any?
-      end.first
-      if existing
-        # puts "combining: #{existing} + #{con}"
-        #      sleep 1
-        found = true
-        new_connections << (existing + con).uniq.sort
-      else
-        new_connections << con
-      end
-    end
-    break unless found
-
-    connections = new_connections
-  end
-  connections
-end
-
 distances = {}
 coordinates.combination(2).each do |pair|
   distances[distance(pair[0], pair[1])] = pair
