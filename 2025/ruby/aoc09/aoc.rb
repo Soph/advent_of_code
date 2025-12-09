@@ -36,20 +36,7 @@ max_y = 0
     edges[start[1]] += [[ends[0], ends[1]]]
   end
 end
-# raycast
 puts "#{[min_x, min_y]} -> #{[max_x, max_y]}"
-# grid = path.dup
-# (min_x..max_x).each do |x|
-#  (min_y..max_y).each do |y|
-#    next if grid.include?([x, y])
-#
-#    same_y = path.select { |pos| pos[1] == y }
-#    to_the_right = same_y.select { |pos| pos[0] > x }
-#    next if same_y.size == to_the_right.size # before grid
-#
-#    grid << [x, y] if to_the_right.size.odd?
-#  end
-# #end
 
 # puts edges.inspect
 
@@ -79,34 +66,24 @@ def inside?(edges, position)
   to_the_right.size.odd?
 end
 
-def border(pair)
-  path = Set.new
-  coordinates = [pair[0], [pair[0][0], pair[1][1]], pair[1], [pair[1][0], pair[0][1]]]
-  (-1..2).each do |i|
-    start = coordinates[i]
-    finish = coordinates[i + 1]
-    if start[0] == finish[0]
-      ends = [start[1], finish[1]].sort
-      (ends[0]..ends[1]).each do |y|
-        path << [start[0], y]
-      end
-    else
-      ends = [start[0], finish[0]].sort
-      (ends[0]..ends[1]).each do |x|
-        path << [x, start[1]]
-      end
-    end
-  end
-  path
-end
-
 max = 0
 max_coordinates = nil
 candidates = {}
 i = 0
 coordinates.combination(2).each do |pair|
+  corners = [pair[0], pair[1], [pair[0][0], pair[1][1]], [pair[1][0], pair[0][1]]]
+  next unless corners.all? { |c| path.include?(c) || inside?(edges, c) }
+
   # next check if there are no edges inside the rectangle either
-  next unless border(pair).all? { |pos| path.include?(pos) || inside?(edges, pos) }
+  valid = true
+  y_range = [pair[0][1], pair[1][1]].sort
+  x_range = [pair[0][0], pair[1][0]].sort
+  (y_range[0]..y_range[1]).each do |y|
+    valid = false if edges[y].any? do |edge|
+      (edge[0] > x_range[0] && edge[0] < x_range[1]) || (edge[1] > x_range[0] && edge[1] < x_range[1])
+    end
+  end
+  next unless valid
 
   size = ((pair[0][0] - pair[1][0]).abs + 1) * ((pair[0][1] - pair[1][1]).abs + 1)
   candidates[size] ||= []
@@ -120,36 +97,3 @@ coordinates.combination(2).each do |pair|
 end
 puts max_coordinates.inspect
 puts "Part 2: #{max}"
-exit
-candidates.keys.sort.reverse.each do |size|
-  candidates[size].each do |pair|
-    valid = true
-    (pair[0][1]..pair[1][1]).each do |y|
-      valid = false if edges[y].any? do |edge|
-        (edge[0] >= pair[0][0] && edge[0] <= pair[1][0]) || (edge[1] >= pair[0][0] && edge[1] <= pair[1][0])
-      end
-    end
-    (pair[0][]..pair[1][1]).each do |y|
-      valid = false if edges[y].any? do |edge|
-        (edge[0] >= pair[0][0] && edge[0] <= pair[1][0]) || (edge[1] >= pair[0][0] && edge[1] <= pair[1][0])
-      end
-    end
-
-    puts "Part2: #{size}" if valid
-  end
-end
-
-exit
-# [15822, 84037], [83178, 15240]
-(15_240..84_037).each do |y|
-  (15_822..83_178).each do |x|
-    if path.include?([x, y])
-      putc '#'
-    # elsif grid.include?([x, y])
-    #  putc 'o'
-    else
-      putc '.'
-    end
-  end
-  puts
-end
