@@ -36,7 +36,7 @@ max_y = 0
     edges[start[1]] += [[ends[0], ends[1]]]
   end
 end
-puts "#{[min_x, min_y]} -> #{[max_x, max_y]}"
+# puts "#{[min_x, min_y]} -> #{[max_x, max_y]}"
 
 # puts edges.inspect
 
@@ -69,7 +69,6 @@ end
 max = 0
 max_coordinates = nil
 candidates = {}
-i = 0
 coordinates.combination(2).each do |pair|
   corners = [pair[0], pair[1], [pair[0][0], pair[1][1]], [pair[1][0], pair[0][1]]]
   next unless corners.all? { |c| path.include?(c) || inside?(edges, c) }
@@ -80,7 +79,9 @@ coordinates.combination(2).each do |pair|
   x_range = [pair[0][0], pair[1][0]].sort
   (y_range[0]..y_range[1]).each do |y|
     valid = false if edges[y].any? do |edge|
-      (edge[0] > x_range[0] && edge[0] < x_range[1]) || (edge[1] > x_range[0] && edge[1] < x_range[1])
+      next if y == y_range[0] || y == y_range[1] # this is our upper/lower boundary, we can ignore
+
+      edge[1] > x_range[0] && edge[0] < x_range[1]
     end
   end
   next unless valid
@@ -92,8 +93,6 @@ coordinates.combination(2).each do |pair|
     max = size
     max_coordinates = pair
   end
-  i += 1
-  puts i
 end
-puts max_coordinates.inspect
+# puts max_coordinates.inspect
 puts "Part 2: #{max}"
