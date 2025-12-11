@@ -21,6 +21,8 @@ def find_path(data, start, finish)
         if n == finish
           puts "Done: #{new_path}"
           done << new_path
+        elsif path.include?(n)
+          puts "Loop: #{new_path}"
         else
           new_paths << new_path
           puts "Continue: #{new_path}"
@@ -42,7 +44,7 @@ data.each do |key, values|
   end
 end
 
-puts find_path(reverse_data, 'dac', 'fft').inspect
+puts find_path(reverse_data, 'dac', 'svr').inspect
 exit
 
 srv_dac = find_path(data, 'svr', 'dac')
