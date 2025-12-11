@@ -49,19 +49,21 @@ data.each do |d|
     found = false
     new_variants = Set.new
     variants.each do |variant|
-      if variant == d[2]
-        puts "Found #{i} for #{d[3]}"
-        sum += i
-        found = true
-        break
-      end
       d[1].each do |button|
         new_variant = variant.dup
         button.each do |digit|
           new_variant[digit] += 1
         end
+        next if new_variant.each_with_index.any? { |val, i| val > d[2][i] }
+
         new_variants << new_variant
       end
+      next unless variant == d[2]
+
+      puts "Found #{i} for #{d[3]}"
+      sum += i
+      found = true
+      break
     end
     break if found
 
